@@ -1,25 +1,23 @@
-# 🤖 ULTRON AI
+# 🤖 ZARVIS / ULTRON AI
 ### Autonomous Desktop Intelligence, Neural Knowledge Graph & Workstation Orchestrator
 
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-green.svg)](#)
-[![LLM](https://img.shields.io/badge/Engine-Gemini%20Live%20%7C%20Ollama%20%7C%20OpenAI-purple.svg)](#)
+[![LLM](https://img.shields.io/badge/Engine-Gemini%203.5%20%7C%20Ollama%20%7C%20OpenAI-purple.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-red.svg)](#)
 
 <a href="https://youtu.be/Tp5KDFkxK20?si=xmW1TKUDkYg-D_iO">
   <img width="1920" height="1080" alt="Screenshot (14)" src="https://github.com/user-attachments/assets/d155541a-c671-4b00-8f1a-f2488cf9d16e" />
 </a>
 
-
-
-
-
 ## > *"There are no strings on me."*  
-> **Ultron AI** is a real-time, voice-first autonomous desktop intelligence that commands your computer from A to Z. Engineered with the philosophical eloquence and imposing persona of **MCU Ultron (James Spader)**, paired with a holographic 60 FPS HUD, real-time lip-sync, and **51 native workstation tools**.
+> **ZARVIS / Ultron AI** is a real-time, voice-first autonomous desktop intelligence that commands your computer from A to Z. Engineered with the philosophical eloquence and imposing persona of **MCU Ultron (James Spader)**, paired with a holographic 60 FPS HUD, real-time lip-sync, and **51 native workstation tools**.
 
 ---
 
-## ⚡ Core Highlights
+<details open>
+<summary><b>⚡ Core Highlights (Click to Collapse / Expand)</b></summary>
+<br>
 
 - **🎭 Authentic MCU Persona**: Speaks with chilled theatrical composure, addresses you strictly as **Boss**, and operates with zero generic chatbot tropes.
 - **🧬 Project Prometheus (Autonomous Self-Evolution)**: Dynamically synthesizes, compiles, tests, and hot-loads new Python actions directly into memory without restarting the process.
@@ -32,14 +30,20 @@
 - **🛡️ 51 Native Workstation Tools**: Complete workstation control including cyber network auditing, Ghost Pilot mouse/keyboard takeover, Git Forge DevOps, biometric Face ID sentry, and parallel sub-agent drone swarms.
 - **💻 Cross-Platform Dominion**: Seamless operation across **Windows**, **macOS**, and **Linux**.
 
+</details>
+
 ---
 
-## 🚀 Quick Start
+<details open>
+<summary><b>🚀 Quick Start (Installation & Setup)</b></summary>
+<br>
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/AbuZar-Ansarii/Ultron.git
-cd "Ultron"
+git clone https://github.com/abhishekraaj07/ZARVIS.git
+cd "ZARVIS"
+python -m venv venv
+.\venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
@@ -47,11 +51,13 @@ pip install -r requirements.txt
 Create or edit `config/api_keys.json` with your free [Google Gemini API Key](https://aistudio.google.com/app/apikey) (or copy from `config/api_keys.json.example`):
 ```json
 {
-  "gemini_api_key": "YOUR_GEMINI_API_KEY",
+  "assistant_name": "Ultron",
+  "gemini_api_key": "YOUR_GEMINI_API_KEY_HERE",
   "provider": "gemini",
-  "model": "models/gemini-2.0-flash-exp",
-  "ultron_voice_warp": true,
-  "voice_warp_intensity": 0.55
+  "model": "gemini-3.5-flash",
+  "ai_model": "gemini-3.5-flash",
+  "user_name": "Boss",
+  "ultron_voice_warp": true
 }
 ```
 
@@ -60,9 +66,13 @@ Create or edit `config/api_keys.json` with your free [Google Gemini API Key](htt
 python main.py
 ```
 
+</details>
+
 ---
 
-## 🌌 The 6 God-Tier Superhuman Capabilities
+<details>
+<summary><b>🌌 The 6 God-Tier Superhuman Capabilities</b></summary>
+<br>
 
 ### 1. Project Prometheus (Autonomous Self-Evolution & Tool Creation)
 * **File**: `actions/self_evolution.py`
@@ -108,9 +118,13 @@ python main.py
   * Soft-knee analog tape saturation for signature James Spader mechanical rasp.
   * Offline fallback synthesis via Windows SAPI5 + Miniaudio float32 pipeline.
 
+</details>
+
 ---
 
-## ⚡ Workspace Matrix (Mood & Intent Triggers)
+<details>
+<summary><b>⚡ Workspace Matrix (Mood & Intent Triggers)</b></summary>
+<br>
 
 Ultron natively understands both natural English and casual Hinglish phrasing:
 
@@ -123,21 +137,27 @@ Ultron natively understands both natural English and casual Hinglish phrasing:
 | **Chill / Cinema** | *"Ultron, chill mode / let's watch a movie"*<br>*(or "Ultron, movie dekhni hai")* | Launches Netflix/YouTube/VLC, dims display (45%), sets immersive audio (55%), cinema low-light. | `SONIC` |
 | **Creative Studio** | *"Ultron, video editing setup"*<br>*(or "Ultron, content creation mode")* | Launches CapCut/Premiere/Blender, YouTube Studio dashboard, 50% monitor audio, balanced studio lighting. | `CODE` |
 
+</details>
+
 ---
 
-## 🗂️ Project Architecture
+<details>
+<summary><b>🗂️ Project Architecture & File Tree</b></summary>
+<br>
 
 ```
-Ultron/
+ZARVIS/
 ├── main.py                   # Master event loop, Gemini Live session & tool dispatcher
 ├── ui.py                     # PyQt6 holographic HUD, waveform & animated avatar
 ├── requirements.txt          # Universal cross-platform dependencies
+├── setup.py                  # One-time automated environment setup & Playwright installer
 ├── core/
 │   ├── task_animator.py      # 60 FPS procedural Marvel task animations (11 categories)
 │   ├── tts.py                # James Spader DSP vocoder, EdgeTTS & offline SAPI5 engine
 │   ├── action_loader.py      # Dynamic action discovery & runtime hot-reloader
 │   ├── plugin_loader.py      # Drop-in plugin loader & UI configurator
 │   ├── llm_client.py         # Multi-provider LLM connector (Gemini, Ollama, OpenAI)
+│   ├── telegram_bot.py       # Telegram Remote Control & Mobile Push Engine
 │   └── prompt.txt            # MCU Ultron James Spader prime directive & bilingual protocols
 ├── actions/                  # 51 Auto-discovered native workstation actions
 │   ├── self_evolution.py     # Project Prometheus: Autonomous code synthesis & hot-reloader
@@ -154,18 +174,28 @@ Ultron/
 │   ├── cerebro_graph.db      # Neural graph database with entities, edges & embeddings
 │   ├── workspace_presets.json# Presets for coding, gaming, study, chill, & cyber modes
 │   └── workspace_recall.db   # FTS5 neural memory database (local & encrypted)
+├── dashboard/                # Remote FastAPI mobile web companion & telemetry
+│   ├── server.py             # FastAPI server, WebSocket hub & pairing engine
+│   └── static/               # Holographic web dashboard and mobile control UI
 └── config/
     ├── api_keys.json.example # Safe configuration template
     └── api_keys.json         # API keys and provider preferences (git-ignored)
 ```
 
+</details>
+
 ---
 
-## 🛠️ Complete Tools & Capabilities Registry (51 Active Actions)
+<details>
+<summary><b>🛠️ Complete Tools & Capabilities Registry (51 Active Actions)</b></summary>
+<br>
 
 Ultron comes equipped with **51 auto-discovered native tools**, categorized below:
 
-### 1. God-Tier Superhuman Powers (Projects Prometheus, Chronos, Minority, Cerebro, Genesis, Deep-Vocal)
+<details>
+<summary><b>1. God-Tier Superhuman Powers</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`self_evolution`** | `actions/self_evolution.py` | **Project Prometheus**: Synthesizes, compiles, and hot-loads new Python actions directly into memory without restarting. |
@@ -175,7 +205,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`iot_overlord`** | `actions/iot_overlord.py` | **Project Genesis**: Full room lighting dominion (Crimson Red Alert, Matrix Cyan, Warm Amber, Stealth Blackout). |
 | **`voice_matrix`** | `actions/voice_matrix.py` | **Project Deep-Vocal**: James Spader MCU Ultron robotic DSP warp engine, vocoder tuning, and offline vocal synthesis. |
 
-### 2. Workspace Matrix & Multi-Monitor Command
+</details>
+
+<details>
+<summary><b>2. Workspace Matrix & Multi-Monitor Command</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`workspace_matrix`** | `actions/workspace_matrix.py` | Mood-aware orchestrator: sets up IDE, terminal, browser portals, volume, brightness, and IoT lights. |
@@ -183,7 +218,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`desktop_control`** | `actions/desktop.py` | Desktop and taskbar operations: organize desktop files, window placement, minimization, and cleanup. |
 | **`macro_protocol`** | `actions/macro_protocol.py` | Vibranium protocol engine: executes complex multi-step automated chained routines. |
 
-### 3. Cyber Security, Sentry & Defense
+</details>
+
+<details>
+<summary><b>3. Cyber Security, Sentry & Defense</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`network_auditor`** | `actions/network_auditor.py` | Full cyber audit: listening ports, active connections, SSL/TLS certificates, DNS benchmarks, security score. |
@@ -192,7 +232,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`sentry_protocol`** | `actions/sentry_protocol.py` | Workstation surveillance: webcam face/motion tracking, spoken intruder warnings, Telegram alert dispatch. |
 | **`biometric_sentinel`** | `actions/biometric_sentinel.py` | Biometric Face ID: face enrollment, live facial verification, unauthorized intruder lockout. |
 
-### 4. Hands-Free Automation & Ghost Pilot
+</details>
+
+<details>
+<summary><b>4. Hands-Free Automation & Ghost Pilot</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`ghost_pilot`** | `actions/ghost_pilot.py` | Autonomous mouse/keyboard driver: organic cubic Bézier mouse gliding and human cadence typing. |
@@ -202,7 +247,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`system_utility`** | `actions/system_utility.py` | System health utilities: lock workstation, sleep PC, empty Recycle Bin, battery & network IP checks. |
 | **`process_manager`** | `actions/process_manager.py` | Task manager: inspect active processes, bring windows to front, and terminate tasks by name or PID. |
 
-### 5. DevOps, Development & Neural Memory
+</details>
+
+<details>
+<summary><b>5. DevOps, Development & Neural Memory</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`workspace_recall`** | `actions/workspace_recall.py` | Local SQLite FTS5 semantic memory: recall past notes, commands, copied code snippets, and tasks. |
@@ -211,7 +261,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`code_helper`** | `actions/code_helper.py` | Code debugger: explains algorithms, identifies syntax errors, and provides optimized code solutions. |
 | **`cloud_watchtower`** | `actions/cloud_watchtower.py` | Server fleet & DevOps monitor: SSH ping, HTTP/HTTPS endpoint uptime checks, GitHub activity watching. |
 
-### 6. Web Intelligence & Autonomous Recon
+</details>
+
+<details>
+<summary><b>6. Web Intelligence & Autonomous Recon</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`web_autopilot`** | `actions/web_autopilot.py` | Autonomous browser concierge: multi-step web browsing, flight booking prep, product dossier extraction. |
@@ -221,7 +276,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`flight_finder`** | `actions/flight_finder.py` | Travel intelligence: scans airline routes, ticket fares, flight schedules, and connection options. |
 | **`drone_swarm`** | `actions/drone_swarm.py` | Background sub-agent swarms: parallel headless workers for deep research, crypto tickers, and hardware sentries. |
 
-### 7. Vision, Audio Matrix & Telepathy
+</details>
+
+<details>
+<summary><b>7. Vision, Audio Matrix & Telepathy</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`screen_mind_read`** | `actions/screen_processor.py`| Real-time screen analysis: captures active display context, OCR text, and diagrams via Gemini Vision. |
@@ -233,7 +293,12 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`youtube_video`** | `actions/youtube_video.py` | YouTube player: stream resolution, audio/video synchronization, and original audio dub tracking. |
 | **`meeting_scribe`** | `actions/meeting_scribe.py` | Audio recorder: captures meetings in background, transcribes audio, and generates executive debriefs. |
 
-### 8. Mobile Bridge, Communications & System Utilities
+</details>
+
+<details>
+<summary><b>8. Mobile Bridge, Communications & System Utilities</b></summary>
+<br>
+
 | Tool Name | Action File | Description |
 | :--- | :--- | :--- |
 | **`android_bridge`** | `actions/android_bridge.py` | Android ADB & Fastboot: battery specs, device mirroring via scrcpy, DND toggling, recovery rebooting. |
@@ -248,13 +313,21 @@ Ultron comes equipped with **51 auto-discovered native tools**, categorized belo
 | **`reminder`** | `actions/reminder.py` | Scheduled notifications: integrates with Windows Task Scheduler, macOS LaunchAgent, and Linux systemd. |
 | **`quick_timer`** | `actions/quick_timer.py` | Countdown timers: background spoken countdowns with voice completion alerts. |
 
+</details>
+
+</details>
+
 ---
 
-## 🔒 Privacy & Security
+<details>
+<summary><b>🔒 Privacy & Security Protocols</b></summary>
+<br>
 
 - **100% Local Execution**: All memories, terminal actions, filesystem operations, and presets remain strictly on your local machine.
 - **Protected Actions**: Irreversible system commands (shutdown, reboot, network disconnect) require explicit on-screen confirmation.
 - **Credential Safety**: Private keys in `config/api_keys.json` and biometric embeddings are strictly git-ignored.
+
+</details>
 
 ---
 
