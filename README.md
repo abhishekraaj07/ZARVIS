@@ -4,6 +4,8 @@
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-green.svg)](#)
 [![LLM](https://img.shields.io/badge/Engine-Gemini%203.5%20%7C%20Ollama%20%7C%20OpenAI-purple.svg)](#)
+[![Release](https://img.shields.io/github/v/release/abhishekraaj07/ZARVIS?color=red&label=Release)](https://github.com/abhishekraaj07/ZARVIS/releases/tag/v1.0.0)
+[![Direct Download](https://img.shields.io/badge/Download-ZARVIS.exe-success?style=flat&logo=windows)](https://github.com/abhishekraaj07/ZARVIS/releases/download/v1.0.0/ZARVIS.exe)
 [![License](https://img.shields.io/badge/License-MIT-red.svg)](#)
 
 <a href="https://youtu.be/Tp5KDFkxK20?si=xmW1TKUDkYg-D_iO">
@@ -67,7 +69,10 @@ python main.py
 ```
 
 ### 4. Standalone Windows Executable (.EXE)
-Build or package the standalone desktop executable with bundled 3D neural avatar and 51 actions:
+* **Direct Download**: [**Download ZARVIS.exe (v1.0.0)**](https://github.com/abhishekraaj07/ZARVIS/releases/download/v1.0.0/ZARVIS.exe)
+* **Releases Hub**: [**GitHub Releases (v1.0.0)**](https://github.com/abhishekraaj07/ZARVIS/releases/tag/v1.0.0)
+
+Build or package the standalone desktop executable from source with bundled 3D neural avatar and 51 actions:
 ```bash
 pip install pyinstaller
 pyinstaller zarvis.spec --noconfirm
