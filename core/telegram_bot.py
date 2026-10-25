@@ -21,6 +21,7 @@ from __future__ import annotations
 import io
 import json
 import os
+import secrets
 import platform
 import threading
 import time
@@ -44,6 +45,7 @@ class TelegramBot:
         self._thread: Optional[threading.Thread] = None
         self._last_update_id = 0
         self._base_url = f"https://api.telegram.org/bot{self.token}"
+        self._pairing_code = f"{secrets.randbelow(900000) + 100000}"
 
     @property
     def is_running(self) -> bool:
@@ -65,7 +67,12 @@ class TelegramBot:
         self._running = True
         self._thread = threading.Thread(target=self._poll_loop, daemon=True, name="UltronTelegramBot")
         self._thread.start()
-        print(f"[Telegram] Bot daemon started (Auth Chat ID: {self.chat_id or 'Waiting for auto-pair'})")
+        if self.chat_id:
+            print(f"[Telegram] Bot daemon started (Authenticated Boss Chat ID: {self.chat_id})")
+        else:
+            print(f"[Telegram] 🔒 Bot active — Pairing PIN required for initial handshake.")
+            print(f"[Telegram] 🔑 One-Time Pairing PIN: {self._pairing_code}")
+            print(f"[Telegram] 👉 Send '/pair {self._pairing_code}' in your Telegram bot to link this workstation.")
         return True
 
     def stop(self):
@@ -166,18 +173,28 @@ class TelegramBot:
         if not text or not sender_id:
             return
 
-        # ── Pairing / Authentication Gate ────────────────────────────────────
+        # ── Cryptographic Pairing / Authentication Gate ──────────────────────
         if not self.chat_id:
-            # First interaction auto-pairs with Boss
-            self.chat_id = sender_id
-            save_telegram_config(self.token, self.chat_id, enabled=True)
-            welcome_msg = (
-                f"🤖 *ULTRON AI — TELEMETRIC LINK ESTABLISHED*\n"
-                f"Handshake authenticated with *{user_name}* (Chat ID: `{sender_id}`).\n"
-                f"Workstation is now cryptographically bound to this phone link, Boss.\n\n"
-                f"Type /help to inspect remote command protocols."
-            )
-            self.send_message(welcome_msg, target_chat_id=sender_id)
+            parts = text.split()
+            provided_code = parts[1].strip() if len(parts) > 1 else ""
+            if parts[0].lower() in ("/pair", "/start") and provided_code == self._pairing_code:
+                self.chat_id = sender_id
+                save_telegram_config(self.token, self.chat_id, enabled=True)
+                welcome_msg = (
+                    f"🤖 *ULTRON AI — TELEMETRIC LINK ESTABLISHED*\n"
+                    f"Cryptographic PIN verified with *{user_name}* (Chat ID: `{sender_id}`).\n"
+                    f"Workstation is now securely bound to this phone link, Boss.\n\n"
+                    f"Type /help to inspect remote command protocols."
+                )
+                self.send_message(welcome_msg, target_chat_id=sender_id)
+            else:
+                challenge_msg = (
+                    f"🔒 *PAIRING AUTHENTICATION REQUIRED*\n"
+                    f"Unauthorized entity. To link this Telegram account as Boss, send:\n\n"
+                    f"`/pair <6-digit PIN>`\n\n"
+                    f"Check the 6-digit PIN displayed on your PC workstation console or HUD."
+                )
+                self.send_message(challenge_msg, target_chat_id=sender_id)
             return
 
         # Reject any other chat IDs
