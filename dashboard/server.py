@@ -97,6 +97,19 @@ _CRYPTOJS_CDN  = ("https://cdnjs.cloudflare.com/ajax/libs/"
 _CRYPTOJS_FILE = STATIC_DIR / "crypto-js.min.js"
 
 
+def _is_remote_allowed() -> bool:
+    try:
+        import json
+        cfg_p = BASE_DIR / "config" / "api_keys.json"
+        if cfg_p.exists():
+            with open(cfg_p, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                return bool(d.get("allow_remote_dashboard", False))
+    except Exception:
+        pass
+    return False
+
+
 def _ensure_network_access(port: int) -> None:
     """Cross-platform, best-effort: open port in the OS firewall for LAN access.
 
@@ -1171,9 +1184,12 @@ class DashboardServer:
         certs = BASE_DIR / "config" / "certs"
         ssl_key  = certs / "ultron.key" if (certs / "ultron.key").exists() else certs / "jarvis.key"
         ssl_cert = certs / "ultron.crt" if (certs / "ultron.crt").exists() else certs / "jarvis.crt"
-        asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, PORT + 1)
+        remote_allowed = _is_remote_allowed()
+        host = "0.0.0.0" if remote_allowed else "127.0.0.1"
+        if remote_allowed:
+            asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, PORT + 1)
         cfg = uvicorn.Config(
-            self.app, host="0.0.0.0", port=PORT + 1, log_level="warning",
+            self.app, host=host, port=PORT + 1, log_level="warning",
             ssl_keyfile=str(ssl_key), ssl_certfile=str(ssl_cert),
         )
         print(f"[Dashboard] Manual entry:  {self._ip}:{PORT + 1}  (type in browser, accept cert once)")
@@ -1188,9 +1204,14 @@ class DashboardServer:
             print("[Dashboard] Run:  pip install fastapi 'uvicorn[standard]' cryptography")
             return
 
-        # Firewall setup runs in a thread — uvicorn starts immediately,
-        # no waiting for UAC dialogs or subprocess timeouts.
-        asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, PORT)
+        remote_allowed = _is_remote_allowed()
+        host = "0.0.0.0" if remote_allowed else "127.0.0.1"
+        if remote_allowed:
+            # Firewall setup runs in a thread — uvicorn starts immediately,
+            # no waiting for UAC dialogs or subprocess timeouts.
+            asyncio.get_event_loop().run_in_executor(None, _ensure_network_access, PORT)
+        else:
+            print("[Dashboard] Local-only loopback mode active (bound to 127.0.0.1).")
 
         # Generate the TLS pair on first run so no private key ships in the repo.
         _ensure_certs()
@@ -1204,7 +1225,7 @@ class DashboardServer:
             asyncio.create_task(self._serve_alias())
 
         cfg = uvicorn.Config(
-            self.app, host="0.0.0.0", port=PORT, log_level="warning",
+            self.app, host=host, port=PORT, log_level="warning",
             **({"ssl_keyfile": str(ssl_key), "ssl_certfile": str(ssl_cert)} if use_ssl else {}),
         )
 

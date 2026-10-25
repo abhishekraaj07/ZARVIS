@@ -63,10 +63,17 @@ Create or edit `config/api_keys.json` with your free [Google Gemini API Key](htt
 }
 ```
 
-### 3. Launch Ultron
-```bash
-python main.py
-```
+### 3. Launch Ultron (One-Click Windows Launcher or CLI)
+* **One-Click Batch Launcher (Recommended)**: Double-click `run_zarvis.bat` or run:
+  ```cmd
+  run.bat
+  ```
+  *(Automatically configures UTF-8 CodePage 65001, detects and activates the virtual environment, verifies configuration, and launches ZARVIS.)*
+
+* **Manual Python Execution**:
+  ```bash
+  python main.py
+  ```
 
 ### 4. Standalone Windows Executable (.EXE)
 * **Direct Download**: [**Download ZARVIS.exe (v1.0.0)**](https://github.com/abhishekraaj07/ZARVIS/releases/download/v1.0.0/ZARVIS.exe)

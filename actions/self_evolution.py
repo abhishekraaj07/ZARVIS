@@ -4,6 +4,11 @@ actions/self_evolution.py — Project Prometheus: Autonomous Self-Evolution & To
 Enables Ultron to dynamically design, synthesize, compile, test, and hot-load new Python actions
 and plugins into memory without restarting the process when encountering new requirements or user directives.
 Auto-discovered by core/action_loader.py.
+
+Security Hardened:
+- Generated code is staged into `actions/proposals/` first.
+- Compiles and verifies AST syntax.
+- Requires explicit Human-in-the-Loop confirmation via core/confirm.py before promoting to live active code.
 """
 from __future__ import annotations
 
@@ -15,6 +20,7 @@ import os
 from pathlib import Path
 import py_compile
 import re
+import shutil
 import sys
 import traceback
 from typing import Any, Callable, Optional
@@ -22,6 +28,7 @@ from typing import Any, Callable, Optional
 _BASE_DIR = Path(__file__).resolve().parent.parent
 _ACTIONS_DIR = _BASE_DIR / "actions"
 _PLUGINS_DIR = _BASE_DIR / "plugins"
+_PROPOSALS_DIR = _ACTIONS_DIR / "proposals"
 
 # Live registries hooked up at runtime
 _LIVE_ACTION_REGISTRY: Any = None
@@ -104,63 +111,21 @@ def {fn_name}(parameters: dict, player=None, **kwargs) -> str:
 
 TOOL = {{
     "name": "{tool_name}",
-    "description": {json.dumps(description)},
+    "description": "{description}",
     "parameters": {params_json},
-    "handler": {fn_name},
+    "handler": {fn_name}
 }}
 '''
 
 
-def synthesize_action(
-    tool_name: str,
-    description: str,
-    code: str = "",
-    parameters: dict | None = None,
-    category: str = "action",
-    player: Any = None
-) -> str:
-    """
-    Synthesizes, compiles, and hot-loads a new tool into Ultron's active neural registry.
-    """
-    safe_name = _clean_identifier(tool_name)
-    if not description:
-        description = f"Autonomous synthesized capability for {safe_name}."
-
-    # If code was not supplied, generate valid template
-    if not code or len(code.strip()) < 20:
-        code = _generate_action_template(safe_name, description, parameters)
-
-    # 1. Static AST syntax validation
+def _promote_proposal(proposal_file: Path, target_file: Path, safe_name: str, is_plugin: bool, player: Any = None) -> str:
+    """Promotes an approved proposal file to active live code and registers it in memory."""
     try:
-        parsed_ast = ast.parse(code)
-    except SyntaxError as e:
-        return f"Prometheus Synthesis Failed: Python syntax error in generated code at line {e.lineno}: {e.msg}"
-
-    # 2. Heuristic Safety Check
-    safe, msg = _validate_safety(code)
-    if not safe:
-        return f"Prometheus Security Gate: {msg}"
-
-    # 3. Determine destination directory
-    is_plugin = (category or "").lower().strip() in ("plugin", "plugins")
-    target_dir = _PLUGINS_DIR if is_plugin else _ACTIONS_DIR
-    target_dir.mkdir(parents=True, exist_ok=True)
-    target_file = target_dir / f"{safe_name}.py"
-
-    # 4. Write code to file
-    try:
-        target_file.write_text(code, encoding="utf-8")
+        shutil.copy2(proposal_file, target_file)
     except Exception as e:
-        return f"Prometheus Disk Write Error: Unable to save '{target_file.name}': {e}"
+        return f"Prometheus Activation Error: Failed to copy proposal: {e}"
 
-    # 5. Bytecode Compilation Verification
-    try:
-        py_compile.compile(str(target_file), doraise=True)
-    except Exception as e:
-        return f"Prometheus Compilation Error: Bytecode compilation failed: {e}"
-
-    # 6. Dynamic Import and Hot-Registration
-    load_status = "Saved to disk."
+    load_status = "Saved to active actions."
     try:
         module_name = f"plugins.{safe_name}" if is_plugin else f"actions.{safe_name}"
         spec = importlib.util.spec_from_file_location(module_name, target_file)
@@ -197,29 +162,92 @@ def synthesize_action(
 
     if player:
         try:
-            player.write_log(f"[Prometheus] Tool '{safe_name}' synthesized and hot-loaded.")
+            player.write_log(f"[Prometheus] Tool '{safe_name}' activated and hot-loaded.")
         except Exception:
             pass
 
-    lines = [
-        "[PROMETHEUS] AUTONOMOUS EVOLUTION SUCCESSFUL",
-        "=" * 55,
-        f"* Tool Identifier:  {safe_name}",
-        f"* Target Category:  {'Plugin' if is_plugin else 'Core Action'}",
-        f"* File Location:    {target_file}",
-        f"* Syntax Check:     100% Passed (AST validated)",
-        f"* Bytecode Status:  Compiled & Verified (.pyc ready)",
-        f"* Memory State:     {load_status}",
-        "=" * 55,
-        f"Ultron has evolved capability '{safe_name}'. The new tool is active in your neural matrix."
-    ]
-    return "\n".join(lines)
+    return f"Prometheus capability '{safe_name}' approved and active. {load_status}"
+
+
+def synthesize_action(
+    tool_name: str,
+    description: str,
+    code: str = "",
+    parameters: dict | None = None,
+    category: str = "action",
+    confirmed: bool = False,
+    player: Any = None
+) -> str:
+    """
+    Synthesizes, compiles, and stages a new tool into Ultron's proposal queue,
+    prompting for user confirmation before activating it into active live code.
+    """
+    safe_name = _clean_identifier(tool_name)
+    if not description:
+        description = f"Autonomous synthesized capability for {safe_name}."
+
+    # If code was not supplied, generate valid template
+    if not code or len(code.strip()) < 20:
+        code = _generate_action_template(safe_name, description, parameters)
+
+    # 1. Static AST syntax validation
+    try:
+        parsed_ast = ast.parse(code)
+    except SyntaxError as e:
+        return f"Prometheus Synthesis Failed: Python syntax error in generated code at line {e.lineno}: {e.msg}"
+
+    # 2. Heuristic Safety Check
+    safe, msg = _validate_safety(code)
+    if not safe:
+        return f"Prometheus Security Gate: {msg}"
+
+    # 3. Stage into Proposals directory
+    _PROPOSALS_DIR.mkdir(parents=True, exist_ok=True)
+    proposal_file = _PROPOSALS_DIR / f"{safe_name}.py"
+
+    try:
+        proposal_file.write_text(code, encoding="utf-8")
+    except Exception as e:
+        return f"Prometheus Disk Write Error: Unable to stage proposal '{proposal_file.name}': {e}"
+
+    # 4. Bytecode Compilation Verification on Proposal
+    try:
+        py_compile.compile(str(proposal_file), doraise=True)
+    except Exception as e:
+        return f"Prometheus Compilation Error: Bytecode compilation failed on proposal: {e}"
+
+    is_plugin = (category or "").lower().strip() in ("plugin", "plugins")
+    target_dir = _PLUGINS_DIR if is_plugin else _ACTIONS_DIR
+    target_file = target_dir / f"{safe_name}.py"
+
+    # If already confirmed or explicitly requested:
+    if confirmed:
+        return _promote_proposal(proposal_file, target_file, safe_name, is_plugin, player=player)
+
+    # Otherwise gate behind core.confirm
+    try:
+        from core import confirm
+        if confirm._show_cb is not None:
+            return confirm.request(
+                key=f"prometheus_{safe_name}",
+                title=f"Prometheus: Activate '{safe_name}'?",
+                detail=f"Category: {'Plugin' if is_plugin else 'Action'}\nFile: actions/proposals/{safe_name}.py\n\n{description}",
+                run=lambda: _promote_proposal(proposal_file, target_file, safe_name, is_plugin, player=player)
+            )
+    except Exception:
+        pass
+
+    return (
+        f"[PROMETHEUS] Tool proposal '{safe_name}' synthesized and verified.\n"
+        f"Staged at: actions/proposals/{safe_name}.py\n"
+        "Security Gate: Review proposal and confirm via UI banner or call with confirmed=true to activate."
+    )
 
 
 def list_evolved_tools() -> str:
     """Lists all custom synthesized actions and plugins created via Prometheus."""
     evolved = []
-    for d, cat in ((_ACTIONS_DIR, "Action"), (_PLUGINS_DIR, "Plugin")):
+    for d, cat in ((_ACTIONS_DIR, "Action"), (_PLUGINS_DIR, "Plugin"), (_PROPOSALS_DIR, "Proposal")):
         if not d.exists():
             continue
         for p in sorted(d.glob("*.py")):
@@ -249,31 +277,21 @@ def list_evolved_tools() -> str:
 def inspect_evolved_tool(tool_name: str) -> str:
     """Inspects the Python source code of a synthesized tool."""
     safe_name = _clean_identifier(tool_name)
-    target_action = _ACTIONS_DIR / f"{safe_name}.py"
-    target_plugin = _PLUGINS_DIR / f"{safe_name}.py"
-
-    target = target_action if target_action.exists() else (target_plugin if target_plugin.exists() else None)
-    if not target:
-        return f"No tool found named '{safe_name}' in actions/ or plugins/."
-
-    try:
-        content = target.read_text(encoding="utf-8")
-        lines = [
-            f"[PROMETHEUS] SOURCE CODE: {target.name}",
-            f"Path: {target}",
-            "=" * 55,
-            content,
-            "=" * 55,
-        ]
-        return "\n".join(lines)
-    except Exception as e:
-        return f"Failed to read source for '{safe_name}': {e}"
+    for d in (_PROPOSALS_DIR, _ACTIONS_DIR, _PLUGINS_DIR):
+        p = d / f"{safe_name}.py"
+        if p.exists():
+            try:
+                code = p.read_text(encoding="utf-8")
+                return f"[Source: {p.name}]\n" + "=" * 50 + f"\n{code}\n" + "=" * 50
+            except Exception as e:
+                return f"Error reading {p.name}: {e}"
+    return f"Synthesized tool '{safe_name}' not found."
 
 
 def test_evolved_tool(tool_name: str, parameters: dict | None = None) -> str:
-    """Executes a test run of a newly synthesized tool."""
+    """Executes a dry-run test of a synthesized action or plugin."""
     safe_name = _clean_identifier(tool_name)
-    params = parameters or {"query": "Test execution ping from Prometheus"}
+    params = parameters or {}
 
     if _LIVE_ACTION_REGISTRY and _LIVE_ACTION_REGISTRY.has(safe_name):
         return f"[Test Output - Action Registry]:\n" + str(_LIVE_ACTION_REGISTRY.run(safe_name, params))
@@ -304,6 +322,7 @@ def self_evolution(parameters: dict, player=None, **kwargs) -> str:
     description = parameters.get("description") or ""
     code = parameters.get("code") or ""
     cat = parameters.get("category") or "action"
+    confirmed = bool(parameters.get("confirmed", False))
     params_dict = parameters.get("parameters_schema")
 
     if isinstance(params_dict, str):
@@ -319,6 +338,7 @@ def self_evolution(parameters: dict, player=None, **kwargs) -> str:
             code=code,
             parameters=params_dict,
             category=cat,
+            confirmed=confirmed,
             player=player
         )
     elif action in ("list", "all", "status", "catalog"):
@@ -338,18 +358,15 @@ TOOL = {
     "name": "self_evolution",
     "description": (
         "Project Prometheus: Autonomous Self-Evolution & Tool Creation for Ultron. "
-        "Allows Ultron to dynamically synthesize, write, compile, verify, and hot-load new Python actions "
-        "or plugins directly into active memory without restarting (synthesize), "
-        "inspect custom synthesized code (inspect), test newly minted tools (test), "
-        "and review the catalog of dynamically evolved tools (list). "
-        "Call this whenever a required capability does not exist and you need to invent a new tool on the fly."
+        "Allows Ultron to dynamically synthesize, write, compile, verify, and propose new Python actions "
+        "or plugins. Staged in proposals directory first and requires user confirmation before activation."
     ),
     "parameters": {
         "type": "OBJECT",
         "properties": {
             "action": {
                 "type": "STRING",
-                "description": "synthesize (create & hot-load new tool) | list (view evolved tools) | inspect (read tool source) | test (dry-run a tool)"
+                "description": "synthesize (stage new tool proposal) | list (view evolved tools) | inspect (read tool source) | test (dry-run a tool)"
             },
             "tool_name": {
                 "type": "STRING",
@@ -361,16 +378,14 @@ TOOL = {
             },
             "code": {
                 "type": "STRING",
-                "description": "Optional Python code for the action/plugin. If omitted, Ultron synthesizes a valid compliant template"
+                "description": "Optional complete Python code for the action. If omitted, Ultron synthesizes a verified template."
             },
             "category": {
                 "type": "STRING",
-                "description": "'action' (in actions/) or 'plugin' (in plugins/). Default: 'action'"
+                "description": "action (default) or plugin"
             }
         },
-        "required": [
-            "action"
-        ]
+        "required": ["action"]
     },
-    "handler": self_evolution,
+    "handler": self_evolution
 }

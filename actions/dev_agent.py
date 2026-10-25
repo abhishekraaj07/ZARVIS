@@ -464,6 +464,10 @@ def _build_project(
         msg = f"Planning failed: {e}"
         if speak: speak(msg)
         return msg
+    except Exception as e:
+        msg = f"Planning failed: {e}"
+        if speak: speak(msg)
+        return msg
 
     proj_name    = project_name or plan.get("project_name", "jarvis_project")
     proj_name    = re.sub(r"[^\w\-]", "_", proj_name)
