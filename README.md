@@ -66,6 +66,17 @@ Create or edit `config/api_keys.json` with your free [Google Gemini API Key](htt
 python main.py
 ```
 
+### 4. Standalone Windows Executable (.EXE)
+Build or package the standalone desktop executable with bundled 3D neural avatar and 51 actions:
+```bash
+pip install pyinstaller
+pyinstaller zarvis.spec --noconfirm
+```
+Run the compiled distribution directly:
+```bash
+.\dist\ZARVIS\ZARVIS.exe
+```
+
 </details>
 
 ---

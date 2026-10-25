@@ -174,14 +174,27 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
     skipped — they NEVER raise out of this function.
     """
     reserved = reserved_names or set()
-    actions_dir.mkdir(parents=True, exist_ok=True)
+    dirs_to_scan: list[Path] = [actions_dir]
+    if getattr(sys, "frozen", False):
+        if hasattr(sys, "_MEIPASS"):
+            meipass_actions = Path(sys._MEIPASS) / "actions"
+            if meipass_actions not in dirs_to_scan and meipass_actions.exists():
+                dirs_to_scan.append(meipass_actions)
+        exe_actions = Path(sys.executable).parent / "actions"
+        if exe_actions not in dirs_to_scan and exe_actions.exists():
+            dirs_to_scan.append(exe_actions)
+
     valid: dict[str, ActionRecord] = {}
     all_records: list[ActionRecord] = []
+    seen_files: set[str] = set()
 
-    files = sorted(actions_dir.glob("*.py"), key=lambda p: p.name)  # deterministic order
-    for path in files:
-        if path.name.startswith("_"):
-            continue
+    for adir in dirs_to_scan:
+        adir.mkdir(parents=True, exist_ok=True)
+        files = sorted(adir.glob("*.py"), key=lambda p: p.name)  # deterministic order
+        for path in files:
+            if path.name.startswith("_") or path.name in seen_files:
+                continue
+            seen_files.add(path.name)
         try:
             module_name = f"actions.{path.stem}"
             # Reuse the already-imported module when present so handlers are the

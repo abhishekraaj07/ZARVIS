@@ -238,14 +238,27 @@ def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
     file is skipped — they NEVER raise out of this function and never abort the scan
     of remaining files.
     """
-    plugins_dir.mkdir(parents=True, exist_ok=True)
+    dirs_to_scan: list[Path] = [plugins_dir]
+    if getattr(sys, "frozen", False):
+        if hasattr(sys, "_MEIPASS"):
+            meipass_plugins = Path(sys._MEIPASS) / "plugins"
+            if meipass_plugins not in dirs_to_scan and meipass_plugins.exists():
+                dirs_to_scan.append(meipass_plugins)
+        exe_plugins = Path(sys.executable).parent / "plugins"
+        if exe_plugins not in dirs_to_scan and exe_plugins.exists():
+            dirs_to_scan.append(exe_plugins)
+
     valid: dict[str, PluginRecord] = {}
     all_records: list[PluginRecord] = []
+    seen_files: set[str] = set()
 
-    files = sorted(plugins_dir.glob("*.py"), key=lambda p: p.name)  # deterministic order
-    for path in files:
-        if path.name.startswith("_"):
-            continue
+    for pdir in dirs_to_scan:
+        pdir.mkdir(parents=True, exist_ok=True)
+        files = sorted(pdir.glob("*.py"), key=lambda p: p.name)  # deterministic order
+        for path in files:
+            if path.name.startswith("_") or path.name in seen_files:
+                continue
+            seen_files.add(path.name)
         try:
             module_name = f"plugins.{path.stem}"
             spec = importlib.util.spec_from_file_location(module_name, path)

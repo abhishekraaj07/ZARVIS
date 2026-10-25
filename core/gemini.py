@@ -296,15 +296,23 @@ def _cooling(model: str) -> bool:
 
 def api_key(refresh: bool = False) -> str:
     """The Gemini key from config/api_keys.json. Cached; never raises."""
-    global _cached_key
+    global _cached_key, _KEY_FILE
     with _key_lock:
         if _cached_key is not None and not refresh:
             return _cached_key
         try:
+            if not _KEY_FILE.exists() and hasattr(sys, "_MEIPASS"):
+                bundled_key_file = Path(sys._MEIPASS) / "config" / "api_keys.json"
+                if bundled_key_file.exists():
+                    _KEY_FILE = bundled_key_file
             data = json.loads(_KEY_FILE.read_text(encoding="utf-8"))
-            _cached_key = str(data.get("gemini_api_key") or "")
+            _cached_key = str(data.get("gemini_api_key") or data.get("api_key") or "")
         except Exception:
-            _cached_key = ""
+            import os
+            _cached_key = os.environ.get("GEMINI_API_KEY", "")
+        if not _cached_key:
+            import os
+            _cached_key = os.environ.get("GEMINI_API_KEY", "")
         return _cached_key
 
 

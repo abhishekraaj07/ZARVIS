@@ -36,6 +36,13 @@ def save_api_keys(gemini_api_key: str) -> None:
 
 def load_api_keys() -> dict:
     if not CONFIG_FILE.exists():
+        if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+            bundled = Path(sys._MEIPASS) / "config" / "api_keys.json"
+            if bundled.exists():
+                try:
+                    return json.loads(bundled.read_text(encoding="utf-8"))
+                except Exception:
+                    pass
         return {}
     try:
         return json.loads(CONFIG_FILE.read_text(encoding="utf-8"))
