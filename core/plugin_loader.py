@@ -259,40 +259,40 @@ def discover_plugins(plugins_dir: Path, core_tool_names: set[str],
             if path.name.startswith("_") or path.name in seen_files:
                 continue
             seen_files.add(path.name)
-        try:
-            module_name = f"plugins.{path.stem}"
-            spec = importlib.util.spec_from_file_location(module_name, path)
-            if spec is None or spec.loader is None:
-                raise ImportError("could not build import spec")
-            module = importlib.util.module_from_spec(spec)
-            sys.modules[module_name] = module
             try:
-                spec.loader.exec_module(module)
-            except Exception:
-                sys.modules.pop(module_name, None)
-                raise
+                module_name = f"plugins.{path.stem}"
+                spec = importlib.util.spec_from_file_location(module_name, path)
+                if spec is None or spec.loader is None:
+                    raise ImportError("could not build import spec")
+                module = importlib.util.module_from_spec(spec)
+                sys.modules[module_name] = module
+                try:
+                    spec.loader.exec_module(module)
+                except Exception:
+                    sys.modules.pop(module_name, None)
+                    raise
 
-            rec = _validate(module, path.name)
+                rec = _validate(module, path.name)
 
-            if rec.valid and rec.name in core_tool_names:
-                rec = PluginRecord(name=rec.name, file=path.name,
-                                    error=f"Name '{rec.name}' collides with a core tool — rejected.")
-            elif rec.valid and rec.name in valid:
-                other = valid[rec.name].file
-                rec = PluginRecord(name=rec.name, file=path.name,
-                                    error=f"Name '{rec.name}' already used by plugin '{other}' — rejected.")
+                if rec.valid and rec.name in core_tool_names:
+                    rec = PluginRecord(name=rec.name, file=path.name,
+                                        error=f"Name '{rec.name}' collides with a core tool — rejected.")
+                elif rec.valid and rec.name in valid:
+                    other = valid[rec.name].file
+                    rec = PluginRecord(name=rec.name, file=path.name,
+                                        error=f"Name '{rec.name}' already used by plugin '{other}' — rejected.")
 
-        except Exception as e:
-            rec = PluginRecord(name=path.stem, file=path.name,
-                                error=_load_error(path, plugins_dir, e))
-            traceback.print_exc()
+            except Exception as e:
+                rec = PluginRecord(name=path.stem, file=path.name,
+                                    error=_load_error(path, pdir, e))
+                traceback.print_exc()
 
-        all_records.append(rec)
-        if rec.valid:
-            valid[rec.name] = rec
-            logger(f"Plugin loaded: {rec.name} ({path.name})")
-        else:
-            logger(f"Plugin rejected: {path.name} — {rec.error}")
+            all_records.append(rec)
+            if rec.valid:
+                valid[rec.name] = rec
+                logger(f"Plugin loaded: {rec.name} ({path.name})")
+            else:
+                logger(f"Plugin rejected: {path.name} — {rec.error}")
 
     notify = notify or (lambda _msg: None)
     registry = PluginRegistry(valid, logger, notify)

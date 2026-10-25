@@ -30,6 +30,14 @@ import inspect
 import re
 import sys
 import traceback
+
+for _stream in ("stdout", "stderr"):
+    try:
+        _s = getattr(sys, _stream, None)
+        if _s is not None and hasattr(_s, "reconfigure"):
+            _s.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
@@ -195,48 +203,48 @@ def discover_actions(actions_dir: Path, reserved_names: set[str] | None = None,
             if path.name.startswith("_") or path.name in seen_files:
                 continue
             seen_files.add(path.name)
-        try:
-            module_name = f"actions.{path.stem}"
-            # Reuse the already-imported module when present so handlers are the
-            # same objects the rest of the app holds.
-            module = sys.modules.get(module_name)
-            if module is None:
-                spec = importlib.util.spec_from_file_location(module_name, path)
-                if spec is None or spec.loader is None:
-                    raise ImportError("could not build import spec")
-                module = importlib.util.module_from_spec(spec)
-                sys.modules[module_name] = module
-                try:
-                    spec.loader.exec_module(module)
-                except Exception:
-                    sys.modules.pop(module_name, None)
-                    raise
+            try:
+                module_name = f"actions.{path.stem}"
+                # Reuse the already-imported module when present so handlers are the
+                # same objects the rest of the app holds.
+                module = sys.modules.get(module_name)
+                if module is None:
+                    spec = importlib.util.spec_from_file_location(module_name, path)
+                    if spec is None or spec.loader is None:
+                        raise ImportError("could not build import spec")
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = module
+                    try:
+                        spec.loader.exec_module(module)
+                    except Exception:
+                        sys.modules.pop(module_name, None)
+                        raise
 
-            if getattr(module, "TOOL", None) is None:
-                continue   # not an action file — a helper/capture-only module
+                if getattr(module, "TOOL", None) is None:
+                    continue   # not an action file — a helper/capture-only module
 
-            rec = _validate(module, path.name)
+                rec = _validate(module, path.name)
 
-            if rec.valid and rec.name in reserved:
-                rec = ActionRecord(name=rec.name, file=path.name,
-                                   error=f"Name '{rec.name}' collides with a reserved core tool — rejected.")
-            elif rec.valid and rec.name in valid:
-                other = valid[rec.name].file
-                rec = ActionRecord(name=rec.name, file=path.name,
-                                   error=f"Name '{rec.name}' already used by action '{other}' — rejected.")
+                if rec.valid and rec.name in reserved:
+                    rec = ActionRecord(name=rec.name, file=path.name,
+                                       error=f"Name '{rec.name}' collides with a reserved core tool — rejected.")
+                elif rec.valid and rec.name in valid:
+                    other = valid[rec.name].file
+                    rec = ActionRecord(name=rec.name, file=path.name,
+                                       error=f"Name '{rec.name}' already used by action '{other}' — rejected.")
 
-        except Exception as e:
-            rec = ActionRecord(name=path.stem, file=path.name,
-                               error=f"Failed to load: {e}")
-            traceback.print_exc()
+            except Exception as e:
+                rec = ActionRecord(name=path.stem, file=path.name,
+                                   error=f"Failed to load: {e}")
+                traceback.print_exc()
 
-        all_records.append(rec)
-        if rec.valid:
-            valid[rec.name] = rec
-            logger(f"Action loaded: {rec.name} ({path.name})")
-        else:
-            # Only log a rejection if the file actually tried to be an action.
-            logger(f"Action rejected: {path.name} — {rec.error}")
+            all_records.append(rec)
+            if rec.valid:
+                valid[rec.name] = rec
+                logger(f"Action loaded: {rec.name} ({path.name})")
+            else:
+                # Only log a rejection if the file actually tried to be an action.
+                logger(f"Action rejected: {path.name} — {rec.error}")
 
     registry = ActionRegistry(valid, logger)
     registry._all_records = all_records

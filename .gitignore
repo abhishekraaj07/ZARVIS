@@ -11,6 +11,8 @@ config/whatsapp_web/
 # ── Personal Data & Storage ────────────────────────────────────────
 memory/long_term.json
 memory/*.db
+memory/*.json
+!memory/workspace_presets.json
 memory/drone_reports/
 
 # ── Python Build & Cache ───────────────────────────────────────────

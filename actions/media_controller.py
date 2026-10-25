@@ -17,39 +17,45 @@ except ImportError:
 _OS = platform.system()
 
 
+def _safe_press(key: str) -> bool:
+    if not _PYAUTOGUI:
+        return False
+    try:
+        pyautogui.FAILSAFE = False
+        pyautogui.press(key)
+        return True
+    except Exception:
+        return False
+
+
 def media_play_pause() -> str:
-    if _PYAUTOGUI:
-        pyautogui.press("playpause")
+    if _safe_press("playpause"):
         return "Toggled media play/pause."
-    return "PyAutoGUI is not available."
+    return "Media key press failed or PyAutoGUI unavailable."
 
 
 def media_next() -> str:
-    if _PYAUTOGUI:
-        pyautogui.press("nexttrack")
+    if _safe_press("nexttrack"):
         return "Skipped to next track."
-    return "PyAutoGUI is not available."
+    return "Media key press failed or PyAutoGUI unavailable."
 
 
 def media_prev() -> str:
-    if _PYAUTOGUI:
-        pyautogui.press("prevtrack")
+    if _safe_press("prevtrack"):
         return "Rewound to previous track."
-    return "PyAutoGUI is not available."
+    return "Media key press failed or PyAutoGUI unavailable."
 
 
 def media_stop() -> str:
-    if _PYAUTOGUI:
-        pyautogui.press("stop")
+    if _safe_press("stop"):
         return "Media stopped."
-    return "PyAutoGUI is not available."
+    return "Media key press failed or PyAutoGUI unavailable."
 
 
 def media_mute() -> str:
-    if _PYAUTOGUI:
-        pyautogui.press("volumemute")
+    if _safe_press("volumemute"):
         return "Toggled volume mute."
-    return "PyAutoGUI is not available."
+    return "Media key press failed or PyAutoGUI unavailable."
 
 
 def media_volume_set(level: int) -> str:
