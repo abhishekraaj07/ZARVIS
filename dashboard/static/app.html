@@ -1,0 +1,1754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#06070a">
+  <title>Ultron // Tactical Remote</title>
+  <script src="/static/crypto.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #050608;
+      --surface: #090b12;
+      --card-bg: rgba(12, 15, 24, 0.88);
+      --border: rgba(255, 31, 67, 0.28);
+      --border-bright: rgba(255, 31, 67, 0.75);
+      --crimson: #ff1f43;
+      --crimson-glow: rgba(255, 31, 67, 0.55);
+      --crimson-dim: rgba(255, 31, 67, 0.16);
+      --gold: #ffaa22;
+      --cyan: #00f0ff;
+      --cyan-dim: rgba(0, 240, 255, 0.14);
+      --green: #00ff88;
+      --green-dim: rgba(0, 255, 136, 0.18);
+      --text: #f0f4fc;
+      --text-dim: #7f8fa4;
+      --text-muted: #4e5a6f;
+      --panel: #0d101b;
+    }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      background-image:
+        radial-gradient(circle at 50% 0%, rgba(255, 31, 67, 0.12) 0%, transparent 65%),
+        radial-gradient(circle at 50% 100%, rgba(0, 240, 255, 0.06) 0%, transparent 55%);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* ── TOP HUD HEADER ── */
+    header {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      padding-top: max(10px, env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+      background: rgba(7, 8, 14, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      z-index: 20;
+    }
+    .logo-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .logo-emblem {
+      color: var(--crimson);
+      font-size: 14px;
+      animation: emblemPulse 2.5s infinite ease-in-out;
+      text-shadow: 0 0 10px var(--crimson);
+    }
+    .logo-title {
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 3.5px;
+      color: #ffffff;
+    }
+    .logo-title em { color: var(--crimson); font-style: normal; text-shadow: 0 0 12px var(--crimson); }
+    @keyframes emblemPulse {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px var(--crimson)); }
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-family: ui-monospace, 'Courier New', monospace;
+      transition: all 0.3s;
+    }
+    .status-pill.on {
+      background: var(--green-dim);
+      border-color: rgba(0, 255, 136, 0.35);
+      color: var(--green);
+    }
+    .status-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+    .status-pill.on .status-dot {
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+    .spacer { flex: 1; }
+
+    /* ── HIGH-TECH PHONE SPEAKER PILL BUTTON ── */
+    .spk-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 9.5px;
+      font-weight: 800;
+      font-family: ui-monospace, 'Courier New', monospace;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .spk-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px var(--gold);
+      transition: all 0.3s;
+    }
+    /* When locked / waiting for user tap */
+    .spk-pill.locked {
+      background: rgba(255, 170, 34, 0.14);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      box-shadow: 0 0 12px rgba(255, 170, 34, 0.3);
+      animation: unlockGlow 1.4s ease-in-out infinite alternate;
+    }
+    @keyframes unlockGlow {
+      0%   { border-color: rgba(255, 170, 34, 0.5); box-shadow: 0 0 6px rgba(255, 170, 34, 0.2); }
+      100% { border-color: #ffaa22; box-shadow: 0 0 18px rgba(255, 170, 34, 0.6); }
+    }
+    /* When active & online */
+    .spk-pill.active {
+      background: rgba(0, 255, 136, 0.12);
+      border: 1px solid rgba(0, 255, 136, 0.45);
+      color: var(--green);
+      box-shadow: 0 0 10px rgba(0, 255, 136, 0.15);
+    }
+    .spk-pill.active .spk-dot {
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    /* When actively speaking */
+    .spk-pill.speaking {
+      background: rgba(255, 31, 67, 0.22);
+      border: 1.5px solid var(--crimson);
+      color: #ffffff;
+      box-shadow: 0 0 16px rgba(255, 31, 67, 0.6);
+    }
+    .spk-pill.speaking .spk-dot {
+      background: var(--crimson);
+      box-shadow: 0 0 10px var(--crimson);
+      animation: blink 0.5s infinite;
+    }
+
+    /* Equalizer Wave Bars */
+    .wave-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 11px;
+    }
+    .wave-bar {
+      width: 2.2px;
+      background: currentColor;
+      border-radius: 1px;
+      height: 3px;
+      transition: height 0.1s ease;
+    }
+    .spk-pill.speaking .wave-bar:nth-child(1) { animation: wavePulse 0.35s ease-in-out infinite alternate; }
+    .spk-pill.speaking .wave-bar:nth-child(2) { animation: wavePulse 0.5s ease-in-out infinite alternate 0.1s; }
+    .spk-pill.speaking .wave-bar:nth-child(3) { animation: wavePulse 0.38s ease-in-out infinite alternate 0.2s; }
+    .spk-pill.speaking .wave-bar:nth-child(4) { animation: wavePulse 0.46s ease-in-out infinite alternate 0.15s; }
+    @keyframes wavePulse { 0% { height: 2px; } 100% { height: 11px; } }
+
+    .hud-toggle-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      border-radius: 6px;
+      font-size: 9px;
+      font-family: ui-monospace, 'Courier New', monospace;
+      padding: 5px 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .hud-toggle-btn:hover { color: #ffffff; border-color: var(--crimson); }
+
+    /* ── ULTRON CYBERNETIC AVATAR DECK ── */
+    #avatar-deck {
+      flex-shrink: 0;
+      background: linear-gradient(180deg, rgba(14, 17, 26, 0.98) 0%, rgba(7, 8, 14, 0.98) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px 6px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #avatar-deck.collapsed { display: none; }
+
+    .avatar-viewport {
+      width: 100%;
+      max-width: 340px;
+      height: 180px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    /* Tactical Corner Brackets */
+    .avatar-viewport::before, .avatar-viewport::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .avatar-viewport::before {
+      top: 2px; left: 6px;
+      border-top: 1.5px solid var(--crimson);
+      border-left: 1.5px solid var(--crimson);
+    }
+    .avatar-viewport::after {
+      bottom: 2px; right: 6px;
+      border-bottom: 1.5px solid var(--crimson);
+      border-right: 1.5px solid var(--crimson);
+    }
+
+    #avatar-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Tactical Telemetry HUD Bars */
+    .deck-metrics {
+      width: 100%;
+      max-width: 360px;
+      display: flex;
+      justify-content: space-between;
+      font-family: ui-monospace, 'Courier New', monospace;
+      font-size: 8.5px;
+      letter-spacing: 1px;
+      padding: 3px 6px 0;
+      color: var(--text-dim);
+    }
+    .m-hi { color: var(--crimson); font-weight: 700; }
+    .m-cyan { color: var(--cyan); font-weight: 700; }
+    .m-grn { color: var(--green); font-weight: 700; }
+
+    /* ── QUICK ACTION MATRIX CAROUSEL ── */
+    .quick-chips-tray {
+      flex-shrink: 0;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(6, 7, 10, 0.94);
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .quick-chips-tray::-webkit-scrollbar { display: none; }
+    .action-chip {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      font-family: ui-monospace, 'Courier New', monospace;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .action-chip:hover {
+      background: var(--crimson-dim);
+      border-color: var(--crimson);
+      color: #ffffff;
+    }
+    .action-chip:active {
+      transform: scale(0.96);
+      border-color: var(--cyan);
+    }
+    .action-chip.priority {
+      border-color: rgba(255, 31, 67, 0.5);
+      color: #ffffff;
+      background: rgba(255, 31, 67, 0.08);
+      box-shadow: 0 0 10px rgba(255, 31, 67, 0.15);
+    }
+
+    /* ── TELEPATHY MODALS & BREACH HUD ── */
+    .telepathy-modal-backdrop {
+      position: fixed; inset: 0; background: rgba(3, 4, 7, 0.85);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .telepathy-modal-backdrop.open { display: flex; }
+    .telepathy-modal {
+      width: 100%; max-width: 440px; background: #0c0f18;
+      border: 1px solid var(--border-bright); border-radius: 12px;
+      box-shadow: 0 0 30px rgba(255, 31, 67, 0.25);
+      overflow: hidden; display: flex; flex-direction: column; gap: 12px; padding: 16px;
+      animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop { 0% { opacity: 0; transform: scale(0.92); } 100% { opacity: 1; transform: scale(1); } }
+    .t-modal-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .t-modal-title { font-size: 13px; font-weight: 800; letter-spacing: 2px; color: var(--crimson); text-transform: uppercase; font-family: monospace; }
+    .t-modal-close { background: none; border: none; color: var(--text-dim); font-size: 18px; cursor: pointer; padding: 2px 6px; }
+    .t-modal-body { font-size: 12px; color: var(--text); display: flex; flex-direction: column; gap: 10px; }
+    .t-input-area { width: 100%; height: 90px; background: #07080e; border: 1px solid var(--border); border-radius: 6px; color: #fff; font-family: monospace; font-size: 11px; padding: 8px; resize: none; outline: none; }
+    .t-btn-row { display: flex; gap: 8px; }
+    .t-btn { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 11px; font-weight: 700; cursor: pointer; text-transform: uppercase; font-family: monospace; }
+    .t-btn.primary { background: var(--crimson); color: #fff; border-color: var(--crimson); box-shadow: 0 0 10px var(--crimson-glow); }
+    .t-btn.cyan { background: rgba(0, 240, 255, 0.15); color: var(--cyan); border-color: var(--cyan); }
+
+    /* Breach Alert Card */
+    .breach-alert-card {
+      border: 2px solid #ff1f43; background: rgba(255, 31, 67, 0.14);
+      box-shadow: 0 0 35px rgba(255, 31, 67, 0.55);
+      animation: breachStrobe 0.8s infinite alternate;
+    }
+    @keyframes breachStrobe { 0% { border-color: #ff1f43; } 100% { border-color: #ffaa22; } }
+
+    /* Vision Result Card */
+    .vision-card {
+      background: #090c14; border: 1px solid rgba(0, 240, 255, 0.35); border-radius: 8px;
+      overflow: hidden; margin-top: 6px; box-shadow: 0 0 15px rgba(0, 240, 255, 0.12);
+    }
+    .vision-thumb { width: 100%; max-height: 200px; object-fit: cover; display: block; border-bottom: 1px solid rgba(0, 240, 255, 0.2); }
+    .vision-body { padding: 10px; font-size: 12px; line-height: 1.5; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    /* ── MAIN DIRECTIVES FEED ── */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overscroll-behavior-y: contain;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    main::-webkit-scrollbar { width: 3px; }
+    main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    .msg {
+      max-width: 86%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      animation: pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      word-break: break-word;
+    }
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Ultron Directives */
+    .msg-j {
+      align-self: flex-start;
+      background: rgba(255, 31, 67, 0.07);
+      border: 1px solid rgba(255, 31, 67, 0.3);
+      border-left: 3.5px solid var(--crimson);
+      border-bottom-left-radius: 3px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    }
+    .msg-j .lbl {
+      color: var(--crimson);
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: ui-monospace, 'Courier New', monospace;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .msg-j .lbl::before { content: '◈'; font-size: 10px; }
+
+    /* User Commands */
+    .msg-u {
+      align-self: flex-end;
+      background: rgba(0, 240, 255, 0.06);
+      border: 1px solid rgba(0, 240, 255, 0.26);
+      border-right: 3.5px solid var(--cyan);
+      border-bottom-right-radius: 3px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+    }
+    .msg-u .lbl {
+      color: var(--cyan);
+      font-size: 9.5px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: ui-monospace, 'Courier New', monospace;
+      margin-bottom: 5px;
+      text-align: right;
+    }
+
+    /* System Telemetry Logs */
+    .msg-sys {
+      align-self: center;
+      font-size: 9.5px;
+      color: var(--text-dim);
+      padding: 3px 10px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 99px;
+      font-family: ui-monospace, 'Courier New', monospace;
+      letter-spacing: 0.8px;
+    }
+
+    /* ── FILE CARD ── */
+    .msg-file {
+      align-self: flex-end;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      border-bottom-right-radius: 3px;
+      padding: 11px 13px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      max-width: 86%;
+      animation: pop 0.2s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    }
+    .fc-icon { font-size: 24px; flex-shrink: 0; }
+    .fc-meta { flex: 1; min-width: 0; }
+    .fc-lbl  {
+      font-size: 8.5px; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--crimson);
+      font-family: ui-monospace, 'Courier New', monospace; margin-bottom: 3px;
+    }
+    .fc-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ffffff; }
+    .fc-size { font-size: 9.5px; color: var(--text-dim); margin-top: 2px; font-family: ui-monospace, 'Courier New', monospace; }
+    .fc-bar-wrap { height: 3px; background: rgba(255, 255, 255, 0.08); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .fc-bar { height: 100%; width: 0%; background: var(--crimson); border-radius: 2px; transition: width 0.12s linear; }
+    .fc-status { font-size: 9.5px; font-weight: 700; font-family: ui-monospace, 'Courier New', monospace; letter-spacing: 1px; color: var(--text-dim); }
+    .fc-status.done { color: var(--green); }
+    .fc-status.err  { color: #ff4d6d; }
+    .fc-dl {
+      display: inline-block; margin-top: 5px; font-size: 10px;
+      color: var(--cyan); text-decoration: none; font-weight: 700;
+      font-family: ui-monospace, 'Courier New', monospace;
+    }
+
+    /* ── TACTICAL FOOTER COMMAND DECK ── */
+    footer {
+      flex-shrink: 0;
+      padding: 9px 11px;
+      padding-bottom: max(9px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: rgba(7, 8, 14, 0.96);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      z-index: 20;
+    }
+    #inp {
+      flex: 1;
+      padding: 12px 14px;
+      background: rgba(13, 16, 26, 0.88);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    #inp:focus {
+      border-color: var(--crimson);
+      background: rgba(255, 31, 67, 0.05);
+      box-shadow: 0 0 0 3px rgba(255, 31, 67, 0.18);
+    }
+    #inp::placeholder { color: var(--text-muted); }
+
+    .btn {
+      padding: 12px 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-send {
+      background: linear-gradient(135deg, #ff1f43 0%, #ba102d 100%);
+      color: #ffffff;
+      box-shadow: 0 2px 12px rgba(255, 31, 67, 0.35);
+    }
+    .btn-send:hover { opacity: 0.9; }
+
+    .btn-wake {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      display: none;
+    }
+    .btn-wake.show {
+      display: flex;
+      color: var(--green);
+      border-color: rgba(0, 255, 136, 0.4);
+      background: var(--green-dim);
+    }
+
+    .btn-attach {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-dim);
+      padding: 11px 12px;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+    .btn-attach:hover { border-color: var(--crimson); color: var(--crimson); }
+    .btn-attach:active { transform: scale(0.96); }
+
+    /* ── TACTICAL CRIMSON MIC BUTTON ── */
+    #mic-btn {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      color: var(--crimson);
+      padding: 11px 13px;
+      font-size: 17px;
+      line-height: 1;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    #mic-btn:hover { border-color: var(--crimson); background: var(--crimson-dim); }
+    #mic-btn:active { transform: scale(0.94); }
+    #mic-btn.recording {
+      background: #ff1f43;
+      border-color: #ff1f43;
+      color: #ffffff;
+      animation: micSonar 1.2s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(255, 31, 67, 0.6);
+    }
+    @keyframes micSonar {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 31, 67, 0.5); }
+      50%      { transform: scale(1.08); box-shadow: 0 0 25px rgba(255, 31, 67, 0.85); }
+    }
+
+    /* ── TOAST NOTIFICATION ── */
+    #toast {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: rgba(13, 16, 26, 0.95);
+      border: 1px solid var(--crimson);
+      box-shadow: 0 4px 20px rgba(255, 31, 67, 0.4);
+      color: #ffffff;
+      font-size: 10.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      font-family: ui-monospace, 'Courier New', monospace;
+      padding: 6px 16px;
+      border-radius: 99px;
+      opacity: 0;
+      transition: all 0.22s ease;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div id="toast"></div>
+
+  <!-- Dedicated HTML5 Audio Player for Direct Mobile Loudspeaker Playback -->
+  <audio id="remote-player" playsinline preload="auto"></audio>
+
+  <!-- Top Header HUD -->
+  <header>
+    <div class="logo-box">
+      <span class="logo-emblem">◈</span>
+      <span class="logo-title"><em>U</em>LTRON</span>
+    </div>
+    <div class="status-pill" id="pill"><span class="status-dot"></span><span id="st">ONLINE</span></div>
+
+    <div class="spacer"></div>
+
+    <!-- Phone Speaker Toggle & Equalizer Wave -->
+    <div class="spk-pill locked" id="spk-pill" onclick="unlockAudio(true)" title="Tap to Activate Mobile Speaker">
+      <span class="spk-dot"></span>
+      <span id="spk-label">⚡ ENABLE AUDIO</span>
+      <span class="wave-bars">
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+        <span class="wave-bar"></span>
+      </span>
+    </div>
+
+    <button class="hud-toggle-btn" id="hud-btn" onclick="toggleAvatarDeck()" title="Toggle Ultron Face HUD">HUD</button>
+  </header>
+
+  <!-- Ultron Cybernetic Avatar Deck -->
+  <section id="avatar-deck">
+    <div class="avatar-viewport" id="avatar-view" onclick="onAvatarTap()">
+      <canvas id="avatar-canvas"></canvas>
+    </div>
+    <div class="deck-metrics">
+      <div>CHASSIS: <span class="m-hi">PRIME MK-XL</span></div>
+      <div>CORE: <span class="m-cyan" id="m-state">SENTIENT</span></div>
+      <div>SPEAKER: <span class="m-grn" id="m-spk">DUAL ACTIVE</span></div>
+    </div>
+  </section>
+
+  <!-- Workspace Action Matrix Carousel -->
+  <nav class="quick-chips-tray">
+    <button class="action-chip priority" onclick="triggerCameraVision()">👁️ Camera Eye</button>
+    <button class="action-chip priority" onclick="toggleClipboardModal(true)">📋 Sync Clipboard</button>
+    <button class="action-chip priority" onclick="remotePC('lock')">🔒 Lock PC</button>
+    <button class="action-chip" onclick="remotePC('play_pause')">⏯️ Play/Pause</button>
+    <button class="action-chip" onclick="remotePC('mute')">🔇 Mute PC</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, aaj mere coding ka man hai')">💻 Coding Matrix</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, gaming mode on karo')">🎮 Gaming Overclock</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, cyber security audit mode')">🛡️ Cyber Audit</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, aaj padhai karni hai')">📚 Research Matrix</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, chill mode / movie dekhni hai')">🎬 Chill Mode</button>
+    <button class="action-chip" onclick="sendQuick('Ultron, system status')">⚡ Status Audit</button>
+  </nav>
+
+  <!-- Directives Chat Stream -->
+  <main id="feed"></main>
+
+  <!-- Tactical Bottom Command Footer -->
+  <footer>
+    <label class="btn-attach" for="camera-inp" title="Phone Camera Eye (Physical Vision)">👁️</label>
+    <input type="file" id="camera-inp" accept="image/*" capture="environment" style="display:none" onchange="uploadPhoneVision(this)">
+    <button class="btn-attach" type="button" onclick="toggleClipboardModal(true)" title="Sync PC Clipboard">📋</button>
+    <label class="btn-attach" for="file-inp" title="Send file to PC">📎</label>
+    <input type="file" id="file-inp" multiple accept="*/*" style="display:none">
+    <input id="inp" placeholder="Command Ultron workstation…" autocomplete="off">
+    <button id="mic-btn" onclick="doMic()" title="Voice command">🎤</button>
+    <button class="btn btn-wake" id="wake" onclick="doWake()">WAKE</button>
+    <button class="btn btn-send" onclick="doSend()">SEND</button>
+  </footer>
+
+  <!-- Telepathy Clipboard Modal -->
+  <div class="telepathy-modal-backdrop" id="clipboard-modal" onclick="if(event.target===this) toggleClipboardModal(false)">
+    <div class="telepathy-modal">
+      <div class="t-modal-header">
+        <span class="t-modal-title">📋 Omni-Link Clipboard</span>
+        <button class="t-modal-close" onclick="toggleClipboardModal(false)">✕</button>
+      </div>
+      <div class="t-modal-body">
+        <div style="font-size:11px; color:var(--text-dim)">Shared buffer between this phone and Ultron PC:</div>
+        <textarea id="clip-text" class="t-input-area" placeholder="Loading PC clipboard…"></textarea>
+        <div class="t-btn-row">
+          <button class="t-btn cyan" onclick="fetchPCClipboard()">🔄 Read PC</button>
+          <button class="t-btn" onclick="copyModalToPhone()">📱 Copy Phone</button>
+          <button class="t-btn primary" onclick="pushModalToPC()">💻 Push PC</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sentry Intruder Breach Modal -->
+  <div class="telepathy-modal-backdrop" id="breach-modal" onclick="if(event.target===this) toggleBreachModal(false)">
+    <div class="telepathy-modal breach-alert-card">
+      <div class="t-modal-header">
+        <span class="t-modal-title" style="color:#ff1f43">⚠️ PERIMETER BREACH ALERT</span>
+        <button class="t-modal-close" onclick="toggleBreachModal(false)">✕</button>
+      </div>
+      <div class="t-modal-body">
+        <div id="breach-desc" style="color:#fff; font-weight:700">Workstation perimeter compromised. Intruder detected!</div>
+        <div id="breach-time" style="font-size:10px; color:var(--text-dim); font-family:monospace"></div>
+        <div style="font-size:11px; color:#ffaa22">Windows locked down via user32.LockWorkStation(). Evidence captured.</div>
+        <div class="t-btn-row">
+          <button class="t-btn primary" onclick="toggleBreachModal(false)">Acknowledge Breach</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Auth Tokens ───────────────────────────────────────────────────────────
+    const _authToken  = sessionStorage.getItem('ultron_token') || sessionStorage.getItem('jarvis_token');
+    const _sessionKey = sessionStorage.getItem('ultron_key') || sessionStorage.getItem('jarvis_key');
+
+    if (!_authToken) {
+      location.replace('/login');
+    }
+
+    function _authHeader() { return { 'Authorization': `Bearer ${_authToken}` }; }
+    function _authFetch(url, opts = {}) {
+      opts.headers = Object.assign({}, opts.headers, _authHeader());
+      return fetch(url, opts);
+    }
+
+    // ── AES-256-CBC Encryption ───────────────────────────────────────────────
+    const _AES_SALT = 'ULTRON-DASHBOARD-v1';
+    let _aesKey = null;
+
+    function _initCrypto(key) {
+      if (typeof CryptoJS === 'undefined') return false;
+      _aesKey = CryptoJS.SHA256(key + _AES_SALT);
+      return true;
+    }
+
+    function _encrypt(plaintext) {
+      if (!_aesKey || typeof CryptoJS === 'undefined') return null;
+      try {
+        const iv  = CryptoJS.lib.WordArray.random(16);
+        const enc = CryptoJS.AES.encrypt(
+          CryptoJS.enc.Utf8.parse(plaintext), _aesKey,
+          { iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
+        );
+        const ivHex = iv.toString(CryptoJS.enc.Hex);
+        const ctHex = enc.ciphertext.toString(CryptoJS.enc.Hex);
+        const hex   = ivHex + ctHex;
+        const bytes = new Uint8Array(hex.length / 2);
+        for (let i = 0; i < bytes.length; i++)
+          bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+        return btoa(String.fromCharCode(...bytes));
+      } catch { return null; }
+    }
+
+    if (_sessionKey) _initCrypto(_sessionKey);
+
+    // ── Multi-Layer Mobile Loudspeaker & Speech Engine ────────────────────────
+    let _audioCtx = null;
+    let _nextPlayTime = 0;
+    let _phoneSpkUnlocked = false;
+    let _playerPreWarmed = false;
+    let _hasStreamAudioPlayed = false;
+    let _lastPcmChunkTime = 0;
+    let _vocalLevel = 0;
+    let _lastVoiceTime = 0;
+    let _vocalInterval = null;
+
+    function getAudioCtx() {
+      if (!_audioCtx) {
+        const AudioCtor = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtor) {
+          _audioCtx = new AudioCtor();
+        }
+      }
+      return _audioCtx;
+    }
+
+    // High-Tech Ultron Chime on Audio Activation
+    function playUltronChime() {
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      try {
+        if (ctx.state === 'suspended') ctx.resume();
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sawtooth';
+        osc2.type = 'sine';
+
+        const now = ctx.currentTime;
+        osc1.frequency.setValueAtTime(380, now);
+        osc1.frequency.exponentialRampToValueAtTime(760, now + 0.14);
+
+        osc2.frequency.setValueAtTime(760, now);
+        osc2.frequency.exponentialRampToValueAtTime(1140, now + 0.14);
+
+        gain.gain.setValueAtTime(0.09, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.35);
+        osc2.stop(now + 0.35);
+      } catch (e) {
+        console.warn('Chime warning', e);
+      }
+    }
+
+    // Visual & State Toggle when Ultron speaks
+    function setSpeakingUi(speaking) {
+      const pill = document.getElementById('spk-pill');
+      const mSpk = document.getElementById('m-spk');
+      const mState = document.getElementById('m-state');
+      if (speaking) {
+        pill.classList.add('speaking');
+        if (mSpk) mSpk.textContent = 'BROADCASTING';
+        if (mState) mState.textContent = 'TRANSMITTING';
+        _lastVoiceTime = Date.now();
+        if (!_vocalInterval) {
+          _vocalInterval = setInterval(() => {
+            _vocalLevel = 0.45 + Math.random() * 0.55;
+            _lastVoiceTime = Date.now();
+          }, 80);
+        }
+      } else {
+        pill.classList.remove('speaking');
+        if (mSpk) mSpk.textContent = 'DUAL ACTIVE';
+        if (mState) mState.textContent = 'SENTIENT';
+        if (_vocalInterval) {
+          clearInterval(_vocalInterval);
+          _vocalInterval = null;
+        }
+        _vocalLevel = 0;
+      }
+    }
+
+    // Universal Audio Unlocking: Works on iOS Safari & Android Chrome
+    function unlockAudio(userAction = false) {
+      // 1. Resume AudioContext
+      const ctx = getAudioCtx();
+      if (ctx && ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
+      // 2. Pre-warm HTML5 <audio> element with 1-sample silent WAV
+      const player = document.getElementById('remote-player');
+      if (player && !_playerPreWarmed) {
+        player.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+        player.play().then(() => {
+          player.pause();
+          _playerPreWarmed = true;
+        }).catch(() => {});
+      }
+
+      // 3. Pre-warm SpeechSynthesis with silent utterance
+      if (window.speechSynthesis) {
+        try {
+          const silent = new SpeechSynthesisUtterance(' ');
+          silent.volume = 0.01;
+          window.speechSynthesis.speak(silent);
+        } catch (_) {}
+      }
+
+      if (!_phoneSpkUnlocked || userAction) {
+        _phoneSpkUnlocked = true;
+        const pill = document.getElementById('spk-pill');
+        pill.className = 'spk-pill active';
+        document.getElementById('spk-label').textContent = '🔊 ULTRON AUDIO SYNC';
+        const mSpk = document.getElementById('m-spk');
+        if (mSpk) mSpk.textContent = 'DUAL ACTIVE';
+        if (userAction) {
+          playUltronChime();
+          toast('🔊 Phone Speaker Active');
+          if (navigator.vibrate) navigator.vibrate(40);
+        }
+      }
+    }
+
+    // Listen to every touch/click to pre-warm audio silently
+    ['click', 'touchend', 'pointerdown', 'keydown'].forEach(evt => {
+      document.addEventListener(evt, () => unlockAudio(false), { passive: true });
+    });
+
+    // ── Primary Engine: EdgeTTS Server Streaming to Phone Loudspeaker ────────
+    function speakUltronResponse(text) {
+      if (!text) return;
+
+      const clean = text
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_~#>|]/g, '')
+        .replace(/^(?:ultron|jarvis|assistant|system)\s*:\s*/i, '')
+        .trim();
+      if (!clean) return;
+
+      // If live PCM chunks played within the last 1.4s, avoid duplicate speech
+      if (_hasStreamAudioPlayed && (Date.now() - _lastPcmChunkTime < 1400)) {
+        console.log('[Audio] PCM stream already sounded, skipping TTS.');
+        return;
+      }
+
+      unlockAudio(false);
+
+      const player = document.getElementById('remote-player');
+      const ttsUrl = `/api/tts?text=${encodeURIComponent(clean.slice(0, 500))}&token=${encodeURIComponent(_authToken)}`;
+
+      setSpeakingUi(true);
+
+      let fallbackTriggered = false;
+      const runFallback = () => {
+        if (fallbackTriggered) return;
+        fallbackTriggered = true;
+        setSpeakingUi(false);
+        speakTextFallback(clean);
+      };
+
+      player.src = ttsUrl;
+      player.onplay = () => {
+        setSpeakingUi(true);
+      };
+      player.onended = () => {
+        setSpeakingUi(false);
+      };
+      player.onerror = (err) => {
+        console.warn('[Audio] HTML5 TTS error, falling back to Web Speech:', err);
+        runFallback();
+      };
+
+      const p = player.play();
+      if (p !== undefined) {
+        p.catch(err => {
+          console.warn('[Audio] Autoplay blocked, falling back to Web Speech:', err);
+          runFallback();
+        });
+      }
+    }
+
+    // ── Fallback Engine: Web Speech API ──────────────────────────────────────
+    function speakTextFallback(text) {
+      if (!window.speechSynthesis) return;
+      window.speechSynthesis.cancel();
+
+      const clean = text
+        .replace(/```[\s\S]*?```/g, '')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/[*_~#>|]/g, '')
+        .replace(/^(?:ultron|jarvis|assistant|system)\s*:\s*/i, '')
+        .trim();
+      if (!clean) return;
+
+      const u = new SpeechSynthesisUtterance(clean);
+      u.rate = 1.05;
+      u.pitch = 0.88; // Deep Ultron robotic inflection
+
+      const voices = window.speechSynthesis.getVoices();
+      const v = voices.find(vo => vo.lang.startsWith('hi') || vo.lang.startsWith('en-IN') || vo.name.includes('David') || vo.name.includes('Male')) || voices[0];
+      if (v) u.voice = v;
+
+      u.onstart = () => {
+        setSpeakingUi(true);
+      };
+      u.onend = () => {
+        setSpeakingUi(false);
+      };
+      u.onerror = () => {
+        setSpeakingUi(false);
+      };
+      window.speechSynthesis.speak(u);
+    }
+
+    // ── Real-Time Raw PCM Streamer for Gemini Live ───────────────────────────
+    function playPcmChunk(rawBase64, srcSampleRate = 24000) {
+      unlockAudio(false);
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+      try {
+        const binStr = atob(rawBase64);
+        const len = Math.floor(binStr.length / 2);
+        const bytes = new Uint8Array(binStr.length);
+        for (let i = 0; i < binStr.length; i++) {
+          bytes[i] = binStr.charCodeAt(i);
+        }
+        const int16 = new Int16Array(bytes.buffer, 0, len);
+
+        // Compute amplitude for Avatar visualizer
+        let sumAmp = 0;
+        for (let i = 0; i < len; i++) sumAmp += Math.abs(int16[i]);
+        _vocalLevel = Math.min(1.0, (sumAmp / len) / 32768.0 * 3.8);
+        _lastVoiceTime = Date.now();
+        _lastPcmChunkTime = Date.now();
+        _hasStreamAudioPlayed = true;
+
+        const targetRate = ctx.sampleRate || 48000;
+        const ratio = srcSampleRate / targetRate;
+        const outLen = Math.round(len / ratio);
+
+        const buf = ctx.createBuffer(1, outLen, targetRate);
+        const ch = buf.getChannelData(0);
+
+        for (let i = 0; i < outLen; i++) {
+          const srcIdx = Math.min(Math.floor(i * ratio), len - 1);
+          ch[i] = int16[srcIdx] / 32768.0;
+        }
+
+        const srcNode = ctx.createBufferSource();
+        srcNode.buffer = buf;
+        srcNode.connect(ctx.destination);
+
+        const now = ctx.currentTime;
+        if (_nextPlayTime < now) {
+          _nextPlayTime = now + 0.035;
+        } else if (_nextPlayTime - now > 1.2) {
+          _nextPlayTime = now + 0.035;
+        }
+        srcNode.start(_nextPlayTime);
+        _nextPlayTime += buf.duration;
+
+        const pill = document.getElementById('spk-pill');
+        pill.classList.add('speaking');
+        clearTimeout(pill._timer);
+        pill._timer = setTimeout(() => pill.classList.remove('speaking'), 320);
+      } catch (e) {
+        console.error('PCM playback error:', e);
+      }
+    }
+
+    // ── WebSocket Uplink ──────────────────────────────────────────────────────
+    const feed = document.getElementById('feed');
+    const pill = document.getElementById('pill');
+    const stTxt = document.getElementById('st');
+    const wake = document.getElementById('wake');
+
+    const _wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+    const _wsUrl = `${_wsProto}://${location.host}/ws?token=${encodeURIComponent(_authToken)}`;
+    let ws = null;
+
+    function connectWs() {
+      ws = new WebSocket(_wsUrl);
+      ws.onopen = () => {
+        sys('NEURAL UPLINK SYNCHRONIZED — AES-256 ACTIVE');
+        toast('Uplink Synchronized');
+        setStatus('active');
+      };
+      ws.onclose = () => {
+        sys('UPLINK SEVERED — RECONNECTING…');
+        setStatus('inactive');
+        setTimeout(connectWs, 2000);
+      };
+      ws.onerror = () => sys('UPLINK NETWORK ERROR');
+      ws.onmessage = (e) => {
+        const m = JSON.parse(e.data);
+        if (m.type === 'audio_stream') {
+          playPcmChunk(m.data, m.sr || 24000);
+        } else if (m.type === 'log') {
+          append(m.speaker, m.text);
+          if (m.speaker === 'ultron' || m.speaker === 'jarvis') {
+            speakUltronResponse(m.text);
+          }
+        } else if (m.type === 'speak') {
+          if (m.text) speakUltronResponse(m.text);
+        } else if (m.type === 'status') {
+          setStatus(m.state);
+        } else if (m.type === 'wake') {
+          sys('WAKE EVENT DETECTED // INITIALIZING…');
+          _vocalLevel = 0.8;
+        } else if (m.type === 'sys') {
+          sys(m.text);
+        } else if (m.type === 'file_received') {
+          _onFileReceived(m);
+        } else if (m.type === 'phone_vision_result') {
+          _onVisionReceived(m);
+        } else if (m.type === 'clipboard_sync') {
+          _onClipboardSync(m);
+        } else if (m.type === 'breach_alert') {
+          _onBreachAlert(m);
+        }
+      };
+    }
+    connectWs();
+
+    function setStatus(s) {
+      const mState = document.getElementById('m-state');
+      if (s === 'active') {
+        pill.className = 'status-pill on';
+        stTxt.textContent = 'ONLINE';
+        wake.classList.remove('show');
+        if (mState) mState.textContent = 'SENTIENT';
+      } else {
+        pill.className = 'status-pill';
+        stTxt.textContent = 'STANDBY';
+        wake.classList.add('show');
+        if (mState) mState.textContent = 'STANDBY';
+      }
+    }
+
+    function append(speaker, text) {
+      const d = document.createElement('div');
+      const isUltron = (speaker === 'ultron' || speaker === 'jarvis');
+      if (isUltron) {
+        d.className = 'msg msg-j';
+        d.innerHTML = `<div class="lbl">ULTRON PRIME // COGNITIVE NODE</div>${esc(text)}`;
+      } else {
+        d.className = 'msg msg-u';
+        d.innerHTML = `<div class="lbl">OPERATOR // COMMANDER</div>${esc(text)}`;
+      }
+      feed.appendChild(d);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function sys(text) {
+      const d = document.createElement('div');
+      d.className = 'msg msg-sys';
+      d.textContent = `[SYS] ${text}`;
+      feed.appendChild(d);
+      feed.scrollTop = feed.scrollHeight;
+    }
+
+    function esc(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function onAvatarTap() {
+      if (navigator.vibrate) navigator.vibrate(25);
+      unlockAudio(true);
+      doWake();
+      toast('Ping Transmitted to Ultron');
+    }
+
+    function toggleAvatarDeck() {
+      const deck = document.getElementById('avatar-deck');
+      const btn = document.getElementById('hud-btn');
+      deck.classList.toggle('collapsed');
+      btn.style.borderColor = deck.classList.contains('collapsed') ? 'var(--border)' : 'var(--crimson)';
+    }
+
+    // ── Quick Command Action Chips ───────────────────────────────────────────
+    function sendQuick(cmd) {
+      unlockAudio(false);
+      if (navigator.vibrate) navigator.vibrate([15, 30]);
+      append('user', cmd);
+      const enc = _encrypt(cmd);
+      const body = enc ? { enc } : { text: cmd };
+      _authFetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      toast(`Sent: ${cmd.slice(0, 24)}…`);
+    }
+
+    // ── File Transfer ─────────────────────────────────────────────────────────
+    function _fileIcon(name) {
+      const ext = (name.split('.').pop() || '').toLowerCase();
+      if (['jpg','jpeg','png','gif','webp','heic','svg'].includes(ext)) return '🖼️';
+      if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎬';
+      if (['mp3','m4a','wav','flac','aac','ogg'].includes(ext)) return '🎵';
+      if (['pdf'].includes(ext)) return '📋';
+      if (['doc','docx','txt','md','rtf'].includes(ext)) return '📝';
+      if (['zip','rar','7z','tar','gz'].includes(ext)) return '📦';
+      if (['py','js','html','css','json','c','cpp'].includes(ext)) return '💻';
+      return '📎';
+    }
+
+    function _fmtSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      if (bytes < 1024 ** 3) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+      return (bytes / 1024 ** 3).toFixed(2) + ' GB';
+    }
+
+    function _uploadFile(file) {
+      const id = 'fc_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      const card = document.createElement('div');
+      card.className = 'msg-file';
+      card.id = id;
+      card.innerHTML = `
+        <div class="fc-icon">${_fileIcon(file.name)}</div>
+        <div class="fc-meta">
+          <div class="fc-lbl">TRANSMITTING TO WORKSTATION</div>
+          <div class="fc-name">${esc(file.name)}</div>
+          <div class="fc-size">${_fmtSize(file.size)}</div>
+          <div class="fc-bar-wrap"><div class="fc-bar" id="${id}_bar"></div></div>
+        </div>
+        <div class="fc-status" id="${id}_st">0%</div>
+      `;
+      feed.appendChild(card);
+      feed.scrollTop = feed.scrollHeight;
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/upload');
+      xhr.setRequestHeader('Authorization', `Bearer ${_authToken}`);
+
+      xhr.upload.onprogress = (e) => {
+        if (!e.lengthComputable) return;
+        const pct = Math.round(e.loaded / e.total * 100);
+        const bar = document.getElementById(`${id}_bar`);
+        const st = document.getElementById(`${id}_st`);
+        if (bar) bar.style.width = pct + '%';
+        if (st) st.textContent = pct + '%';
+      };
+
+      xhr.onload = () => {
+        const bar = document.getElementById(`${id}_bar`);
+        const st = document.getElementById(`${id}_st`);
+        const meta = card.querySelector('.fc-meta');
+        const lbl = card.querySelector('.fc-lbl');
+        if (xhr.status === 200) {
+          let savedName = file.name;
+          try { savedName = JSON.parse(xhr.responseText).name || file.name; } catch {}
+          const dlUrl = `/uploads/${encodeURIComponent(savedName)}?token=${encodeURIComponent(_authToken)}`;
+          if (bar) { bar.style.width = '100%'; bar.style.background = 'var(--green)'; }
+          if (st) { st.textContent = '✓'; st.className = 'fc-status done'; }
+          if (lbl) lbl.textContent = 'STORED IN ULTRON UPLOADS';
+          if (meta) meta.insertAdjacentHTML('beforeend',
+            `<a class="fc-dl" href="${dlUrl}" download="${esc(savedName)}">⬇ Download back</a>`);
+          toast('File Transferred to Ultron');
+        } else {
+          let errMsg = 'Upload failed';
+          try { errMsg = JSON.parse(xhr.responseText).error || errMsg; } catch {}
+          if (bar) bar.style.background = '#ff4d6d';
+          if (st) { st.textContent = 'ERR'; st.className = 'fc-status err'; }
+          if (lbl) lbl.textContent = errMsg;
+        }
+      };
+
+      xhr.onerror = () => {
+        const st = document.getElementById(`${id}_st`);
+        const lbl = card.querySelector('.fc-lbl');
+        if (st) { st.textContent = 'ERR'; st.className = 'fc-status err'; }
+        if (lbl) lbl.textContent = 'Connection error';
+      };
+
+      const fd = new FormData();
+      fd.append('file', file);
+      xhr.send(fd);
+    }
+
+    function _onFileReceived(m) {
+      const dlUrl = `/uploads/${encodeURIComponent(m.name)}?token=${encodeURIComponent(_authToken)}`;
+      const card = document.createElement('div');
+      card.className = 'msg-file';
+      card.innerHTML = `
+        <div class="fc-icon">${_fileIcon(m.name)}</div>
+        <div class="fc-meta">
+          <div class="fc-lbl">RECEIVED ON WORKSTATION</div>
+          <div class="fc-name">${esc(m.name)}</div>
+          <div class="fc-size">${_fmtSize(m.size)}</div>
+          <a class="fc-dl" href="${dlUrl}" download="${esc(m.name)}">⬇ Download</a>
+        </div>
+        <div class="fc-status done">✓</div>
+      `;
+      feed.appendChild(card);
+      feed.scrollTop = feed.scrollHeight;
+      toast('Workstation received file');
+    }
+
+    // ── Omni-Link Telepathy Functions ─────────────────────────────────────────
+
+    function remotePC(action) {
+      toast(`Directing PC: ${action.toUpperCase()}…`);
+      if (navigator.vibrate) navigator.vibrate(25);
+      _authFetch('/api/pc-control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action })
+      }).then(r => r.json()).then(data => {
+        if (data.ok) toast(`PC: ${data.result}`);
+        else toast(`Error: ${data.error || 'Failed'}`);
+      }).catch(err => toast(`Network error: ${err.message}`));
+    }
+
+    function triggerCameraVision() {
+      const inp = document.getElementById('camera-inp');
+      if (inp) inp.click();
+    }
+
+    function uploadPhoneVision(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      toast('Transmitting visual telemetry…');
+      sys(`[VISION] Ingesting physical camera frame (${(file.size/1024).toFixed(1)} KB)…`);
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('prompt', 'Inspect this physical scene and describe objects, text, and tactical intelligence.');
+
+      _authFetch('/api/phone-vision', {
+        method: 'POST',
+        body: formData
+      }).then(r => r.json()).then(data => {
+        input.value = '';
+        if (data.ok) {
+          toast('Vision analysis compiled');
+        } else {
+          toast(`Vision fault: ${data.error || 'Unknown'}`);
+        }
+      }).catch(err => {
+        input.value = '';
+        toast(`Upload failed: ${err.message}`);
+      });
+    }
+
+    function _onVisionReceived(m) {
+      const d = document.createElement('div');
+      d.className = 'msg msg-j';
+      d.innerHTML = `
+        <div class="lbl">ULTRON OPTICAL INTELLIGENCE // PHYSICAL SENSOR</div>
+        <div class="vision-card">
+          <img src="${esc(m.url)}" class="vision-thumb" alt="Captured Optical Frame">
+          <div class="vision-body">${esc(m.analysis)}</div>
+        </div>
+      `;
+      feed.appendChild(d);
+      feed.scrollTop = feed.scrollHeight;
+      speakUltronResponse(m.analysis);
+      if (navigator.vibrate) navigator.vibrate([60, 40, 80]);
+    }
+
+    // ── Clipboard Bridge ──────────────────────────────────────────────────────
+    function toggleClipboardModal(show) {
+      const modal = document.getElementById('clipboard-modal');
+      if (!modal) return;
+      if (show === undefined) show = !modal.classList.contains('open');
+      if (show) {
+        modal.classList.add('open');
+        fetchPCClipboard();
+      } else {
+        modal.classList.remove('open');
+      }
+    }
+
+    function fetchPCClipboard() {
+      const txtArea = document.getElementById('clip-text');
+      if (txtArea) txtArea.placeholder = 'Reading PC clipboard…';
+      _authFetch('/api/clipboard')
+        .then(r => r.json())
+        .then(data => {
+          if (data.ok && txtArea) {
+            txtArea.value = data.text || '';
+            toast('PC clipboard synced');
+          }
+        }).catch(() => toast('Clipboard read failed'));
+    }
+
+    function pushModalToPC() {
+      const txtArea = document.getElementById('clip-text');
+      const val = txtArea ? txtArea.value : '';
+      if (!val) { toast('Clipboard buffer is empty'); return; }
+      _authFetch('/api/clipboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: val })
+      }).then(r => r.json()).then(data => {
+        if (data.ok) {
+          toast('Pushed to PC clipboard!');
+          toggleClipboardModal(false);
+        }
+      }).catch(() => toast('Clipboard push failed'));
+    }
+
+    function copyModalToPhone() {
+      const txtArea = document.getElementById('clip-text');
+      const val = txtArea ? txtArea.value : '';
+      if (!val) return;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(val).then(() => toast('Copied to phone!'));
+      } else {
+        txtArea.select();
+        document.execCommand('copy');
+        toast('Copied to phone!');
+      }
+    }
+
+    function _onClipboardSync(m) {
+      toast(`📋 PC Clipboard: ${m.text.slice(0, 35)}…`);
+    }
+
+    // ── Sentry Breach Alert ───────────────────────────────────────────────────
+    function toggleBreachModal(show) {
+      const m = document.getElementById('breach-modal');
+      if (!m) return;
+      if (show) m.classList.add('open');
+      else m.classList.remove('open');
+    }
+
+    function _onBreachAlert(m) {
+      const desc = document.getElementById('breach-desc');
+      const time = document.getElementById('breach-time');
+      if (desc) desc.textContent = `Intrusion Detected: ${m.reason}`;
+      if (time) time.textContent = `Timestamp: ${m.timestamp || new Date().toLocaleTimeString()} | Workstation LOCKED`;
+      toggleBreachModal(true);
+      if (navigator.vibrate) navigator.vibrate([400, 150, 400, 150, 600]);
+      playUltronChime();
+      speakUltronResponse('Security alert. Workstation perimeter breach detected. Operating system has been locked.');
+    }
+
+    document.getElementById('file-inp').addEventListener('change', function () {
+      Array.from(this.files).forEach(_uploadFile);
+      this.value = '';
+    });
+
+    // ── Command Input Handling ────────────────────────────────────────────────
+    function doSend() {
+      unlockAudio(false);
+      const inp = document.getElementById('inp');
+      const txt = inp.value.trim();
+      if (!txt) return;
+      inp.value = '';
+      append('user', txt);
+      const enc = _encrypt(txt);
+      const body = enc ? { enc } : { text: txt };
+      _authFetch('/api/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+
+    function doWake() {
+      unlockAudio(false);
+      sys('TRANSMITTING WAKE SIGNAL…');
+      _authFetch('/api/wake', { method: 'POST' });
+    }
+
+    document.getElementById('inp').addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doSend(); }
+    });
+
+    // ── Toast Notification ────────────────────────────────────────────────────
+    let _toastTimer;
+    function toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    // ── Real-Time Mobile Mic Streaming ────────────────────────────────────────
+    const micBtn = document.getElementById('mic-btn');
+    let _voiceWs = null;
+    let _micCtx = null;
+    let _micStm = null;
+    let _audioNd = null;
+
+    function _micIdle() {
+      micBtn.innerHTML = '🎤';
+      micBtn.title = 'Voice — tap to speak';
+      micBtn.classList.remove('recording');
+    }
+
+    function _f32toPcm16(f32, srcRate) {
+      let s = f32;
+      if (srcRate !== 16000) {
+        const ratio = srcRate / 16000;
+        const len = Math.round(f32.length / ratio);
+        s = new Float32Array(len);
+        for (let i = 0; i < len; i++)
+          s[i] = f32[Math.min(Math.round(i * ratio), f32.length - 1)];
+      }
+      const out = new Int16Array(s.length);
+      for (let i = 0; i < s.length; i++)
+        out[i] = Math.max(-32768, Math.min(32767, Math.round(s[i] * 32768)));
+      return out.buffer;
+    }
+
+    async function doMic() {
+      unlockAudio(false);
+      if (_voiceWs) { _stopVoice(); return; }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        toast('Open chrome://flags to enable mic');
+        return;
+      }
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true },
+        });
+      } catch (e) {
+        sys('Mic permission denied. Check browser settings.');
+        return;
+      }
+
+      let ctx;
+      try { ctx = new AudioContext({ sampleRate: 16000 }); }
+      catch (_) { ctx = new AudioContext(); }
+      if (ctx.state === 'suspended') await ctx.resume();
+
+      const wsProto = location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(
+        `${wsProto}://${location.host}/ws/phone-audio?token=${encodeURIComponent(_authToken)}`
+      );
+      ws.binaryType = 'arraybuffer';
+
+      ws.onopen = async () => {
+        if (navigator.vibrate) navigator.vibrate(30);
+        const rate = ctx.sampleRate;
+        const src = ctx.createMediaStreamSource(stream);
+
+        const wCode = `class J extends AudioWorkletProcessor{process(i){const c=i[0]?.[0];if(c)this.port.postMessage(c.slice());return true;}}registerProcessor('j',J);`;
+        try {
+          const burl = URL.createObjectURL(new Blob([wCode], { type: 'application/javascript' }));
+          await ctx.audioWorklet.addModule(burl);
+          URL.revokeObjectURL(burl);
+          const nd = new AudioWorkletNode(ctx, 'j');
+          let _pbuf = [], _plen = 0;
+          nd.port.onmessage = e => {
+            const chunk = new Int16Array(_f32toPcm16(e.data, rate));
+            _pbuf.push(chunk); _plen += chunk.length;
+            if (_plen >= 1024) {
+              const out = new Int16Array(_plen); let off = 0;
+              for (const c of _pbuf) { out.set(c, off); off += c.length; }
+              if (ws.readyState === 1) ws.send(out.buffer);
+              _pbuf = []; _plen = 0;
+            }
+          };
+          src.connect(nd);
+          _audioNd = nd;
+        } catch (_) {
+          const sp = ctx.createScriptProcessor(4096, 1, 1);
+          sp.onaudioprocess = e => {
+            if (ws.readyState === 1) ws.send(_f32toPcm16(e.inputBuffer.getChannelData(0), rate));
+          };
+          src.connect(sp); sp.connect(ctx.destination);
+          _audioNd = sp;
+        }
+
+        micBtn.innerHTML = '⏹';
+        micBtn.title = 'Tap to stop streaming';
+        micBtn.classList.add('recording');
+        sys('LIVE VOICE TRANSMISSION ACTIVE — SPEAK DIRECTIVES');
+        toast('🎤 Mic Streaming Live');
+      };
+
+      ws.onclose = () => { _stopVoice(); };
+      ws.onerror = () => { sys('VOICE UPLINK FAILED'); _stopVoice(); };
+
+      _voiceWs = ws;
+      _micCtx = ctx;
+      _micStm = stream;
+    }
+
+    function _stopVoice() {
+      if (navigator.vibrate) navigator.vibrate(20);
+      if (_audioNd) { try { _audioNd.disconnect(); } catch (_) {}; _audioNd = null; }
+      if (_micCtx) { try { _micCtx.close(); } catch (_) {}; _micCtx = null; }
+      if (_micStm) { _micStm.getTracks().forEach(t => t.stop()); _micStm = null; }
+      if (_voiceWs) {
+        const w = _voiceWs; _voiceWs = null;
+        if (w.readyState < 2) w.close();
+      }
+      _micIdle();
+    }
+
+    // ── ULTRON CYBERNETIC AVATAR CANVAS RENDERER ──────────────────────────────
+    const cvs = document.getElementById('avatar-canvas');
+    const ctx = cvs.getContext('2d');
+    const avatarImg = new Image();
+    let _imgLoaded = false;
+    avatarImg.src = '/avatar.png';
+    avatarImg.onload = () => { _imgLoaded = true; };
+
+    let _phase = 0;
+    let _gazeX = 0, _gazeY = 0;
+    let _tgtGazeX = 0, _tgtGazeY = 0;
+    let _gazeTimer = 0;
+
+    // Mobile touch interaction tracking for avatar eyes
+    cvs.addEventListener('touchmove', e => {
+      if (!e.touches[0]) return;
+      const rect = cvs.getBoundingClientRect();
+      const x = (e.touches[0].clientX - rect.left) / rect.width - 0.5;
+      const y = (e.touches[0].clientY - rect.top) / rect.height - 0.5;
+      _tgtGazeX = Math.max(-0.6, Math.min(0.6, x * 1.5));
+      _tgtGazeY = Math.max(-0.4, Math.min(0.4, y * 1.5));
+    }, { passive: true });
+
+    function renderAvatar() {
+      const w = cvs.clientWidth;
+      const h = cvs.clientHeight;
+      if (cvs.width !== w * window.devicePixelRatio || cvs.height !== h * window.devicePixelRatio) {
+        cvs.width = w * window.devicePixelRatio;
+        cvs.height = h * window.devicePixelRatio;
+      }
+      ctx.save();
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+      ctx.clearRect(0, 0, w, h);
+
+      _phase += 0.035;
+      if (Date.now() - _lastVoiceTime > 350) {
+        _vocalLevel = Math.max(0, _vocalLevel - 0.04);
+      }
+
+      // Smooth gaze saccades
+      _gazeTimer -= 0.02;
+      if (_gazeTimer <= 0) {
+        _tgtGazeX = (Math.random() - 0.5) * 0.45;
+        _tgtGazeY = (Math.random() - 0.5) * 0.25;
+        _gazeTimer = 2.0 + Math.random() * 2.5;
+      }
+      _gazeX += (_tgtGazeX - _gazeX) * 0.08;
+      _gazeY += (_tgtGazeY - _gazeY) * 0.08;
+
+      const cx = w / 2;
+      const cy = h / 2 - 2;
+      const radius = Math.min(w * 0.38, h * 0.46);
+
+      // ── 1. Holographic HUD Azimuth Rings ───────────────────────────────────
+      ctx.save();
+      ctx.translate(cx, cy);
+
+      // Outer Segmented Clockwise Ring
+      ctx.rotate(_phase * 0.25);
+      ctx.strokeStyle = 'rgba(255, 31, 67, 0.38)';
+      ctx.lineWidth = 1.6;
+      ctx.setLineDash([16, 9, 4, 9]);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 1.15, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Middle Counter-Clockwise Cyan Ring
+      ctx.rotate(-_phase * 0.5);
+      ctx.strokeStyle = 'rgba(0, 240, 255, 0.42)';
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath();
+      ctx.arc(0, 0, radius * 0.95, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Degree Tick Marks
+      ctx.setLineDash([]);
+      ctx.strokeStyle = 'rgba(255, 31, 67, 0.28)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 8; i++) {
+        const ang = (i / 8) * Math.PI * 2;
+        const r1 = radius * 1.18;
+        const r2 = radius * 1.25;
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * r1);
+        ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * r2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // ── 2. Backlight Crimson Atmosphere ───────────────────────────────────
+      const glowR = radius * 1.35;
+      const radGlow = ctx.createRadialGradient(cx, cy, 10, cx, cy, glowR);
+      const intensity = 0.16 + _vocalLevel * 0.45;
+      radGlow.addColorStop(0, `rgba(255, 31, 67, ${intensity})`);
+      radGlow.addColorStop(0.6, 'rgba(255, 31, 67, 0.05)');
+      radGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = radGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ── 3. Ultron Head & Mandible ──────────────────────────────────────────
+      // Head floating bob and speech nod
+      const nod = Math.sin(_phase * 2) * 2.5 + (_vocalLevel * 4);
+      const sway = Math.sin(_phase) * 1.8;
+      const headW = radius * 1.6;
+      const headH = headW * (530 / 474);
+      const hx = cx - headW / 2 + sway;
+      const hy = cy - headH / 2 + nod;
+
+      if (_imgLoaded) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(255, 31, 67, 0.55)';
+        ctx.shadowBlur = 14 + _vocalLevel * 22;
+        ctx.drawImage(avatarImg, hx, hy, headW, headH);
+        ctx.restore();
+      }
+
+      // ── 4. Glowing Robotic Ocular Sensors ──────────────────────────────────
+      const eyeY = hy + headH * 0.38 + (_gazeY * 5);
+      const eyeLx = hx + headW * 0.41 + (_gazeX * 6);
+      const eyeRx = hx + headW * 0.59 + (_gazeX * 6);
+      const eyeR = 3.8 + (_vocalLevel * 2.0);
+
+      // Eye Glow Corona
+      [eyeLx, eyeRx].forEach(ex => {
+        const eg = ctx.createRadialGradient(ex, eyeY, 1, ex, eyeY, eyeR * 3);
+        eg.addColorStop(0, '#ffffff');
+        eg.addColorStop(0.35, '#ff1f43');
+        eg.addColorStop(1, 'rgba(255, 31, 67, 0)');
+        ctx.fillStyle = eg;
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, eyeR * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Hot Pupil
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ex, eyeY, 1.8, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // ── 5. Internal Vocal Furnace Glow ────────────────────────────────────
+      if (_vocalLevel > 0.04) {
+        const mouthX = cx + sway;
+        const mouthY = hy + headH * 0.68;
+        const mg = ctx.createRadialGradient(mouthX, mouthY, 2, mouthX, mouthY, 20 + _vocalLevel * 18);
+        mg.addColorStop(0, `rgba(255, 100, 120, ${_vocalLevel * 0.98})`);
+        mg.addColorStop(0.45, `rgba(255, 31, 67, ${_vocalLevel * 0.55})`);
+        mg.addColorStop(1, 'rgba(255, 31, 67, 0)');
+        ctx.fillStyle = mg;
+        ctx.beginPath();
+        ctx.arc(mouthX, mouthY, 24 + _vocalLevel * 16, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+      requestAnimationFrame(renderAvatar);
+    }
+    requestAnimationFrame(renderAvatar);
+  </script>
+</body>
+</html>
