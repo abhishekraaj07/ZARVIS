@@ -1219,8 +1219,34 @@ class JarvisLive:
     async def _handle_unified_text_command(self, text: str):
         from core import llm_client
         from memory.config_manager import get_ai_provider, get_ai_model, get_user_name
-        provider = get_ai_provider() or "ollama"
-        model = get_ai_model() or "gemma4:31b-cloud"
+        provider = get_ai_provider() or "gemini"
+        model = get_ai_model() or "gemini-2.0-flash"
+
+        # ── Fast Local Intent Interceptor (Zero-Latency Workstation Control) ──
+        t_clean = text.strip()
+        t_lower = t_clean.lower()
+        app_match = re.match(r"^(?:open|launch|start)\s+([a-zA-Z0-9_\-\.\s]+)$", t_lower)
+        if app_match:
+            app_target = app_match.group(1).strip()
+            if app_target not in ("internet", "website", "link", "camera", "webcam"):
+                self.ui.write_log(f"User: {text}")
+                self.ui.set_active_task("open_app", label=f"LAUNCHING APPLICATION // {app_target.upper()}", details=app_target)
+                self.set_speaking(True, keep_task=True)
+                self._action_registry.run("open_app", {"app_name": app_target})
+                reply = f"Opening {app_target.title()} for you, Boss."
+                self.ui.write_log(f"{self._asst_name}: {reply}")
+                self.ui.clear_active_task(success=True)
+                try:
+                    from core.tts import create_tts_player
+                    player = create_tts_player({"tts_engine": "edgetts"})
+                    loop = asyncio.get_event_loop()
+                    await loop.run_in_executor(None, lambda: player.speak(reply, on_level=self.ui.set_audio_level))
+                except Exception:
+                    pass
+                finally:
+                    self.set_speaking(False)
+                    self.ui.set_state("ONLINE")
+                return
 
         self.ui.set_state("THINKING")
         self.ui.set_active_task("neural_cognition", label="NEURAL COGNITION // ANALYZING DIRECTIVE")
@@ -1372,6 +1398,16 @@ class JarvisLive:
 
         except Exception as e:
             print(f"[Ultron] Command execution error: {e}")
+            # If command was an app launch or simple directive, fallback to local executor
+            app_match = re.match(r"^(?:open|launch|start)\s+([a-zA-Z0-9_\-\.\s]+)$", text.strip().lower())
+            if app_match:
+                app_target = app_match.group(1).strip()
+                self._action_registry.run("open_app", {"app_name": app_target})
+                self.ui.write_log(f"{self._asst_name}: Opening {app_target.title()}, Boss (Local Fallback).")
+                self.ui.clear_active_task(success=True)
+                self.set_speaking(False)
+                self.ui.set_state("ONLINE")
+                return
             self.ui.write_log(f"ERR: {provider.upper()} error: {e}")
             if self._dashboard:
                 try:

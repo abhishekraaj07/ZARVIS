@@ -685,7 +685,13 @@ def call_unified(
         if sys_msg:
             payload["systemInstruction"] = {"parts": [{"text": sys_msg}]}
 
-        models_to_try = [m] if m else ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+        models_to_try = []
+        if m:
+            models_to_try.append(m)
+        for fallback in ("gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-3.5-flash"):
+            if fallback not in models_to_try:
+                models_to_try.append(fallback)
+
         last_err = None
         for mod in models_to_try:
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{mod}:generateContent?key={gemini_key}"
@@ -695,14 +701,31 @@ def call_unified(
                     cand = resp.json().get("candidates", [{}])[0]
                     parts = cand.get("content", {}).get("parts", [{}])
                     text_out = "".join(p.get("text", "") for p in parts)
-                    return {"content": text_out.strip(), "tool_calls": []}
+                    
+                    tool_calls = []
+                    # Check for embedded JSON tool invocation in response text
+                    tc_match = re.search(r'\{\s*"name"\s*:\s*"([a-zA-Z0-9_]+)"\s*,\s*"parameters"\s*:\s*(\{.*?\})\s*\}', text_out, re.DOTALL)
+                    if tc_match:
+                        try:
+                            t_name = tc_match.group(1)
+                            t_args = json.loads(tc_match.group(2))
+                            tool_calls.append({"id": f"call_{int(time.time())}", "function": {"name": t_name, "arguments": t_args}})
+                        except Exception:
+                            pass
+                    elif "app_name" in text_out and "{" in text_out:
+                        app_m = re.search(r'\{\s*"app_name"\s*:\s*"([^"]+)"\s*\}', text_out)
+                        if app_m:
+                            tool_calls.append({"id": f"call_{int(time.time())}", "function": {"name": "open_app", "arguments": {"app_name": app_m.group(1)}}})
+                    
+                    return {"content": text_out.strip(), "tool_calls": tool_calls}
                 else:
                     last_err = resp.text
+                    print(f"[LLM] Model {mod} returned status {resp.status_code} ({last_err[:80]}...) - falling back to next rung...")
             except Exception as e:
                 last_err = str(e)
                 continue
         if last_err:
-            print(f"[LLM] Gemini call failed: {last_err}")
+            print(f"[LLM] Gemini call failed across all model ladder rungs: {last_err}")
             raise RuntimeError(f"Gemini API error: {last_err}")
 
     # 2. Claude (Anthropic)

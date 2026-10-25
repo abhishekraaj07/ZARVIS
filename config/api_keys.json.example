@@ -3,11 +3,12 @@
     "gemini_api_key": "YOUR_GEMINI_API_KEY_HERE",
     "os_system": "windows",
     "provider": "gemini",
-    "model": "models/gemini-2.0-flash-exp",
+    "model": "gemini-2.0-flash",
     "voice_name": "Ultron",
     "voice_rate": "+15%",
     "user_name": "Boss",
     "ui_color": "#ff0008",
     "ultron_voice_warp": true,
-    "camera_index": 0
+    "camera_index": 0,
+    "ai_model": "gemini-2.0-flash"
 }
