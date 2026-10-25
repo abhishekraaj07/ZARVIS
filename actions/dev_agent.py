@@ -24,7 +24,7 @@ MODEL_WRITER     = gemini.SMART
 
 def _get_api_key() -> str:
     with open(API_CONFIG_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)["gemini_api_key"]
+        d = json.load(f); return str(d.get("gemini_api_key") or d.get("api_key") or "")
 
 
 def _get_model(model_name: str = gemini.SMART):
