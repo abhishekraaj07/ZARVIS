@@ -21,7 +21,15 @@ __pycache__/
 *$py.class
 *.so
 build/
-dist/
+dist/**
+!dist/
+!dist/ZARVIS/
+!dist/ZARVIS/ZARVIS.exe
+!dist/ZARVIS/config/
+!dist/ZARVIS/config/api_keys.json.example
+# Always protect credentials
+dist/ZARVIS/config/api_keys.json
+dist/**/api_keys.json
 *.egg-info/
 .eggs/
 
