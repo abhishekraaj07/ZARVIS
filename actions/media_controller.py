@@ -9,6 +9,7 @@ import platform
 import subprocess
 try:
     import pyautogui
+    pyautogui.FAILSAFE = False
     _PYAUTOGUI = True
 except ImportError:
     _PYAUTOGUI = False

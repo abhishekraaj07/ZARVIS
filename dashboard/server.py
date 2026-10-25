@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 dashboard/server.py — Ultron Local HTTP Dashboard
 
